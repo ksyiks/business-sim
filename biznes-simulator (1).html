@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Бизнес-симулятор</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{color-scheme:dark;}
+body{background:#0D0D0F!important;color:#E8E4DC!important;font-family:'Golos Text',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(200,16,46,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(200,16,46,0.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:20px 16px 80px;}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid rgba(200,16,46,0.3);margin-bottom:28px;flex-wrap:wrap;gap:10px;}
+.logo{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:900;color:#E8E4DC;}
+.logo span{color:#C8102E;}
+.hud{display:none;gap:12px;align-items:center;flex-wrap:wrap;}
+.hud.show{display:flex;}
+.hi{display:flex;flex-direction:column;align-items:flex-end;font-size:9px;color:#7A7A8C;text-transform:uppercase;letter-spacing:1px;gap:2px;}
+.hi strong{font-family:'Unbounded',sans-serif;font-size:13px;color:#E8E4DC;}
+.hi strong.g{color:#2ECC71;}.hi strong.w{color:#F39C12;}.hi strong.b{color:#E74C3C;}
+.hsep{width:1px;height:28px;background:rgba(200,16,46,0.25);}
+.scr{display:none;}.scr.on{display:block;}
+.ttl{font-family:'Unbounded',sans-serif;font-size:clamp(18px,4vw,30px);font-weight:700;line-height:1.25;color:#E8E4DC;margin-bottom:10px;}
+.ttl span{color:#C8102E;}
+.sub{color:#7A7A8C;font-size:13px;line-height:1.65;margin-bottom:28px;}
+.company-stage{background:#141418;border:1.5px solid rgba(200,16,46,0.25);border-radius:16px;padding:18px;margin-bottom:18px;position:relative;overflow:hidden;}
+.company-stage::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#C8102E,#D4A017);}
+.cs-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cs-name{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:#E8E4DC;}
+.cs-stage-badge{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;background:rgba(200,16,46,0.15);color:#C8102E;}
+.building-wrap{display:flex;align-items:flex-end;gap:16px;margin-bottom:14px;}
+.staff-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.staff-person{font-size:16px;}
+.regions-label{font-size:10px;color:#7A7A8C;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.regions-map{display:flex;gap:5px;flex-wrap:wrap;}
+.region-dot{font-size:10px;padding:2px 7px;border-radius:4px;background:#242430;color:#7A7A8C;transition:all 0.3s;}
+.region-dot.active{background:rgba(200,16,46,0.2);color:#C8102E;}
+.region-dot.fresh{background:rgba(46,204,113,0.2);color:#2ECC71;}
+.chain-header{background:#141418;border:1px solid #242430;border-radius:12px;padding:14px;margin-bottom:14px;}
+.chain-title{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#D4A017;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.chain-steps{display:flex;position:relative;}
+.chain-steps::before{content:'';position:absolute;top:11px;left:12px;right:12px;height:2px;background:#242430;z-index:0;}
+.cs-step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;position:relative;z-index:1;}
+.cs-dot{width:22px;height:22px;border-radius:50%;border:2px solid #242430;background:#0D0D0F;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:'Unbounded',sans-serif;transition:all 0.3s;}
+.cs-dot.done{background:#C8102E;border-color:#C8102E;color:#fff;}
+.cs-dot.cur{background:#D4A017;border-color:#D4A017;color:#0D0D0F;box-shadow:0 0 10px rgba(212,160,23,0.5);}
+.cs-dot.future{color:#7A7A8C;}
+.cs-slbl{font-size:9px;color:#7A7A8C;text-align:center;max-width:55px;line-height:1.3;}
+.cs-slbl.active{color:#D4A017;}
+.macro-ticker{background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.3);border-radius:8px;padding:8px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px;font-size:12px;color:#E8E4DC;}
+.mt-badge{flex-shrink:0;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;background:#C8102E;color:#fff;}
+.advisors-row{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.advisor{background:#141418;border:1.5px solid #242430;border-radius:10px;padding:11px 13px;flex:1;min-width:130px;}
+.adv-header{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.adv-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.adv-role{font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;color:#7A7A8C;letter-spacing:1px;text-transform:uppercase;}
+.adv-name{font-size:11px;font-weight:600;color:#E8E4DC;}
+.adv-opinion{font-size:11px;color:#7A7A8C;line-height:1.5;font-style:italic;}
+.qbar{display:flex;gap:4px;margin-bottom:18px;}
+.qi{flex:1;height:4px;border-radius:2px;background:#242430;transition:background 0.4s;}
+.qi.done{background:#C8102E;}.qi.cur{background:#D4A017;}
+.fin-panel{background:#141418;border:1.5px solid #242430;border-radius:12px;padding:14px;margin-bottom:16px;}
+.fin-title{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#7A7A8C;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.fin-toggle{font-size:10px;color:#C8102E;cursor:pointer;font-family:'Golos Text',sans-serif;font-weight:400;letter-spacing:0;}
+.fin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+@media(max-width:500px){.fin-grid{grid-template-columns:repeat(2,1fr);}}
+.fmc{background:#1C1C22;border-radius:8px;padding:9px 11px;}
+.fmc-l{font-size:9px;color:#7A7A8C;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.fmc-v{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:#E8E4DC;}
+.fmc-v.up{color:#2ECC71;}.fmc-v.dn{color:#E74C3C;}.fmc-v.ne{color:#D4A017;}
+.fmc-sub{font-size:9px;color:#7A7A8C;margin-top:1px;}
+.fin-detail{display:none;margin-top:10px;}
+.fin-detail.show{display:block;}
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #242430;font-size:11px;color:#E8E4DC;}
+.fin-row:last-child{border:none;}
+.ev-card{background:#141418;border:1.5px solid rgba(200,16,46,0.25);border-radius:14px;padding:20px;margin-bottom:16px;position:relative;}
+.ev-lbl{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#C8102E;border:1px solid rgba(200,16,46,0.25);border-radius:100px;padding:3px 11px;margin-bottom:11px;}
+.ev-qlbl{position:absolute;top:14px;right:16px;font-family:'Unbounded',sans-serif;font-size:9px;color:#7A7A8C;background:#1C1C22;padding:3px 9px;border-radius:6px;}
+.ev-ttl{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;color:#E8E4DC;margin-bottom:8px;line-height:1.3;padding-right:70px;}
+.ev-body{font-size:13px;color:#7A7A8C;line-height:1.7;margin-bottom:12px;}
+.ev-src{font-size:10px;color:#7A7A8C;border-top:1px solid #242430;padding-top:9px;font-style:italic;}
+.ev-ctx{background:rgba(212,160,23,0.06);border:1px solid rgba(212,160,23,0.2);border-radius:8px;padding:9px 13px;font-size:12px;line-height:1.6;margin-bottom:12px;color:#E8E4DC;}
+.ev-ctx strong{color:#D4A017;}
+.dec-ttl{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#7A7A8C;letter-spacing:1px;text-transform:uppercase;margin-bottom:9px;}
+.dec-list{display:flex;flex-direction:column;gap:8px;}
+.db{background:#141418;border:1.5px solid #242430;border-radius:10px;padding:12px 15px;cursor:pointer;text-align:left;transition:border-color 0.2s,background 0.2s;color:#E8E4DC;font-family:'Golos Text',sans-serif;font-size:13px;line-height:1.5;display:flex;align-items:flex-start;gap:9px;width:100%;}
+.db:hover{border-color:#C8102E;background:#1C1C22;}
+.db.sel{border-color:#D4A017;background:rgba(212,160,23,0.05);}
+.dl{flex-shrink:0;width:22px;height:22px;border-radius:5px;background:#242430;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#7A7A8C;margin-top:2px;}
+.db.sel .dl{background:#D4A017;color:#0D0D0F;}
+.dt{font-weight:600;margin-bottom:2px;font-size:13px;}
+.ds{font-size:11px;color:#7A7A8C;}
+.db-adv{font-size:10px;margin-top:4px;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;}
+.db-adv.cfo{background:rgba(52,152,219,0.1);color:#3498DB;}
+.db-adv.cto{background:rgba(46,204,113,0.1);color:#2ECC71;}
+.db-adv.cmo{background:rgba(155,89,182,0.1);color:#9B59B6;}
+.db-adv.ceo{background:rgba(212,160,23,0.1);color:#D4A017;}
+.dil-vs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:16px;}
+.do{background:#141418;border:1.5px solid #242430;border-radius:12px;padding:15px;cursor:pointer;text-align:center;transition:border-color 0.2s,background 0.2s;}
+.do:hover{border-color:#C8102E;}.do.ch{border-color:#D4A017;background:rgba(212,160,23,0.05);}
+.do-ico{font-size:24px;margin-bottom:8px;}
+.do-name{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:#E8E4DC;margin-bottom:5px;}
+.do-desc{font-size:11px;color:#7A7A8C;line-height:1.5;}
+.dil-or{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:#C8102E;text-align:center;}
+.macro-card{background:rgba(200,16,46,0.06);border:2px solid rgba(200,16,46,0.4);border-radius:14px;padding:20px;margin-bottom:16px;}
+.macro-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:#C8102E;margin-bottom:7px;}
+.macro-body{font-size:13px;color:#E8E4DC;line-height:1.7;margin-bottom:10px;}
+.macro-impact{display:flex;gap:7px;flex-wrap:wrap;}
+.mi-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:rgba(200,16,46,0.15);color:#C8102E;}
+.syn-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:16px;}
+@media(max-width:500px){.syn-grid{grid-template-columns:1fr;}}
+.sc{background:#141418;border:1.5px solid #242430;border-radius:10px;padding:13px;}
+.sc.ul{border-color:#2ECC71;}.sc.lk{opacity:0.55;}
+.sc-name{font-weight:600;font-size:12px;color:#E8E4DC;margin-bottom:3px;}
+.sc-desc{font-size:11px;color:#7A7A8C;line-height:1.5;margin-bottom:5px;}
+.sc-fx{font-size:11px;color:#2ECC71;}.sc-req{font-size:10px;color:#7A7A8C;margin-top:2px;}
+.res-box{background:#141418;border:1px solid #242430;border-radius:12px;padding:16px;margin-bottom:14px;}
+.res-impacts{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+.ib{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;}
+.ib.p{background:rgba(46,204,113,0.12);color:#2ECC71;}.ib.n{background:rgba(231,76,60,0.12);color:#E74C3C;}.ib.u{background:#242430;color:#7A7A8C;}
+.strat-reveal{background:#141418;border:2px solid #D4A017;border-radius:14px;padding:20px;margin-bottom:18px;text-align:center;}
+.strat-label{font-size:10px;color:#7A7A8C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;}
+.strat-name{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:900;color:#D4A017;margin-bottom:6px;}
+.strat-company{font-size:13px;color:#E8E4DC;margin-bottom:6px;}
+.strat-desc{font-size:12px;color:#7A7A8C;line-height:1.6;}
+.ring-wrap{text-align:center;margin-bottom:22px;}
+.ring{width:120px;height:120px;border-radius:50%;border:5px solid #C8102E;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:10px;}
+.ring-g{font-family:'Unbounded',sans-serif;font-size:34px;font-weight:900;}
+.ring-pct{font-size:10px;color:#7A7A8C;}
+.ring-msg{font-size:12px;color:#7A7A8C;max-width:320px;margin:0 auto;line-height:1.6;}
+.sum-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
+.sum-c{background:#141418;border:1px solid #242430;border-radius:10px;padding:13px;text-align:center;}
+.sum-big{font-family:'Unbounded',sans-serif;font-size:22px;font-weight:900;color:#E8E4DC;margin-bottom:2px;}
+.sum-lbl{font-size:10px;color:#7A7A8C;}
+.sbar-w{margin-bottom:8px;}.sbar-lbl{display:flex;justify-content:space-between;font-size:11px;color:#7A7A8C;margin-bottom:3px;}
+.sbar{height:5px;background:#242430;border-radius:3px;overflow:hidden;}
+.sbar-f{height:100%;border-radius:3px;background:#C8102E;transition:width 0.8s ease;}
+.sbar-f.hi{background:#2ECC71;}.sbar-f.mi{background:#F39C12;}
+.card{background:#141418;border:1.5px solid #242430;border-radius:12px;padding:16px;margin-bottom:12px;}
+.card-ttl{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#D4A017;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.co-row{display:flex;align-items:flex-start;gap:9px;margin-bottom:11px;}
+.co-ico{flex-shrink:0;width:30px;height:30px;border-radius:7px;background:#242430;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.co-name{font-weight:600;font-size:12px;color:#E8E4DC;}
+.co-desc{font-size:11px;color:#7A7A8C;margin-top:2px;line-height:1.5;}
+.gl-item{background:#141418;border:1px solid #242430;border-radius:10px;padding:13px 15px;margin-bottom:8px;}
+.gl-term{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:#E8E4DC;margin-bottom:3px;}
+.gl-def{font-size:11px;color:#7A7A8C;line-height:1.6;}
+.gl-ex{margin-top:7px;background:#1C1C22;border-radius:7px;padding:7px 11px;font-size:11px;line-height:1.5;color:#E8E4DC;border-left:3px solid #C8102E;}
+.gl-ex strong{color:#D4A017;}
+.tr-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #242430;font-size:12px;color:#E8E4DC;}
+.tr-row:last-child{border:none;}
+.tr-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;}
+.tr-tag.g{background:rgba(46,204,113,0.12);color:#2ECC71;}
+.tr-tag.w{background:rgba(243,156,18,0.12);color:#F39C12;}
+.tr-tag.b{background:rgba(231,76,60,0.12);color:#E74C3C;}
+.tr-insight{background:rgba(212,160,23,0.06);border:1px solid rgba(212,160,23,0.2);border-radius:8px;padding:9px 13px;font-size:12px;line-height:1.6;margin-top:9px;color:#E8E4DC;}
+.diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:22px;}
+@media(max-width:580px){.diff-grid{grid-template-columns:1fr;}}
+.dc{background:#141418;border:2px solid #242430;border-radius:12px;padding:16px 13px;cursor:pointer;transition:border-color 0.2s,background 0.2s;}
+.dc:hover{border-color:#C8102E;}
+.dc.sel-e{border-color:#27AE60;background:rgba(39,174,96,0.05);}
+.dc.sel-m{border-color:#F39C12;background:rgba(243,156,18,0.05);}
+.dc.sel-h{border-color:#C0392B;background:rgba(192,57,43,0.05);}
+.dc-emo{font-size:24px;margin-bottom:8px;}
+.dc-name{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;margin-bottom:5px;}
+.dc.e .dc-name{color:#27AE60;}.dc.m .dc-name{color:#F39C12;}.dc.h .dc-name{color:#C0392B;}
+.dc-desc{font-size:11px;color:#7A7A8C;line-height:1.5;margin-bottom:9px;}
+.dc-p{font-size:10px;color:#7A7A8C;display:flex;align-items:center;gap:4px;margin-top:3px;}
+.dc-p::before{content:'—';color:#C8102E;}
+.ind-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;}
+@media(max-width:500px){.ind-grid{grid-template-columns:1fr;}}
+.ic{background:#141418;border:1.5px solid #242430;border-radius:12px;padding:16px;cursor:pointer;transition:border-color 0.2s,transform 0.2s;}
+.ic:hover{border-color:#C8102E;transform:translateY(-2px);}
+.ic-ico{font-size:22px;margin-bottom:10px;}
+.ic-name{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:#E8E4DC;margin-bottom:5px;}
+.ic-desc{font-size:11px;color:#7A7A8C;line-height:1.5;margin-bottom:8px;}
+.tags{display:flex;gap:4px;flex-wrap:wrap;}
+.tag{font-size:9px;padding:2px 7px;border-radius:100px;background:#242430;color:#7A7A8C;}
+.tag.hot{background:rgba(200,16,46,0.15);color:#C8102E;}
+.tag.cool{background:rgba(39,174,96,0.12);color:#2ECC71;}
+.tag.warn{background:rgba(243,156,18,0.12);color:#F39C12;}
+.shdr{display:flex;align-items:center;gap:8px;margin:16px 0 11px;}
+.shdr-l{flex:1;height:1px;background:#242430;}
+.shdr-t{font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;color:#7A7A8C;letter-spacing:1.5px;text-transform:uppercase;}
+.dbadge{display:inline-flex;align-items:center;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:100px;}
+.dbadge.e{background:rgba(39,174,96,0.15);color:#27AE60;}
+.dbadge.m{background:rgba(243,156,18,0.15);color:#F39C12;}
+.dbadge.h{background:rgba(192,57,43,0.15);color:#C0392B;}
+.cond-block{background:#141418;border:1px solid rgba(200,16,46,0.25);border-radius:12px;padding:14px;margin-bottom:16px;}
+.cond-ttl{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#C8102E;letter-spacing:1px;text-transform:uppercase;margin-bottom:9px;}
+.ci{display:flex;align-items:flex-start;gap:7px;font-size:12px;line-height:1.5;margin-bottom:5px;color:#E8E4DC;}
+.ci-ico{flex-shrink:0;font-size:12px;margin-top:1px;}
+.intro-pills{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px;}
+.ip{display:flex;align-items:center;gap:5px;font-size:11px;color:#7A7A8C;}
+.btn{display:inline-flex;align-items:center;gap:6px;background:#C8102E;color:#fff;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;padding:12px 20px;border-radius:10px;border:none;cursor:pointer;transition:background 0.2s,transform 0.15s;letter-spacing:0.3px;}
+.btn:hover{background:#A50D25;transform:translateY(-1px);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+.btn-o{background:transparent;border:1.5px solid #242430;color:#7A7A8C;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;padding:11px 18px;border-radius:10px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+.btn-o:hover{border-color:#C8102E;color:#E8E4DC;}
+.btn-g{background:#1C1C22;border:1.5px solid #242430;color:#E8E4DC;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;padding:11px 18px;border-radius:10px;cursor:pointer;transition:background 0.2s;}
+.btn-g:hover{background:#242430;}
+.brow{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1C1C22;border:1px solid rgba(200,16,46,0.4);border-radius:10px;padding:9px 16px;font-size:12px;font-weight:600;color:#E8E4DC;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#141418;border:1.5px solid rgba(200,16,46,0.3);border-radius:16px;width:100%;max-width:700px;margin:auto;position:relative;animation:modalIn 0.3s ease;}
+@keyframes modalIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #242430;}
+.modal-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:#E8E4DC;}
+.modal-close{width:28px;height:28px;border-radius:50%;background:#242430;border:none;cursor:pointer;color:#7A7A8C;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;}
+.modal-close:hover{background:#C8102E;color:#fff;}
+.modal-body{padding:20px;max-height:75vh;overflow-y:auto;}
+/* CHART */
+.chart-wrap{background:#0D0D0F;border:1px solid #242430;border-radius:10px;padding:14px;margin-bottom:14px;}
+.chart-title{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#7A7A8C;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+/* TOOLTIP */
+.tip-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+.tip-overlay.show{display:flex;}
+.tip-box{background:#1C1C22;border:1.5px solid #D4A017;border-radius:12px;padding:18px 20px;max-width:420px;width:100%;position:relative;}
+.tip-label{font-size:10px;color:#D4A017;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.tip-term{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:#E8E4DC;margin-bottom:8px;}
+.tip-body{font-size:12px;color:#7A7A8C;line-height:1.65;}
+.tip-close{position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:50%;background:#242430;border:none;cursor:pointer;color:#7A7A8C;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.tip-close:hover{background:#C8102E;color:#fff;}
+/* BENCHMARK */
+.bench-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.bench-c{background:#1C1C22;border-radius:10px;padding:13px;}
+.bench-lbl{font-size:10px;color:#7A7A8C;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.bench-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+.bench-val{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;}
+.bench-val.you{color:#D4A017;}.bench-val.mkt{color:#3498DB;}
+.bench-bar-wrap{height:4px;background:#242430;border-radius:2px;overflow:hidden;margin-top:3px;}
+.bench-bar{height:100%;border-radius:2px;}
+/* EXPORT */
+.export-btn{display:inline-flex;align-items:center;gap:6px;background:#1C1C22;border:1.5px solid #242430;color:#E8E4DC;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;transition:border-color 0.2s;}
+.export-btn:hover{border-color:#2ECC71;color:#2ECC71;}
+/* FACTS */
+.fact-card{background:#141418;border:1px solid #242430;border-radius:10px;padding:14px 16px;margin-bottom:9px;}
+.fact-tag{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#C8102E;margin-bottom:5px;}
+.fact-text{font-size:13px;color:#E8E4DC;line-height:1.6;margin-bottom:5px;}
+.fact-src{font-size:10px;color:#7A7A8C;font-style:italic;}
+/* FLOATING NAV */
+.float-nav{position:fixed;bottom:20px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:100;}
+.fn-btn{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 2px 12px rgba(0,0,0,0.4);}
+.fn-btn:hover{transform:scale(1.1);}
+.fn-btn.rules{background:#C8102E;}
+.fn-btn.terms{background:#D4A017;}
+.fn-btn.chart{background:#1C1C22;border:1.5px solid #242430;}
+
+.comp-bar-wrap{background:#141418;border:1px solid rgba(200,16,46,0.2);border-radius:10px;padding:12px 14px;margin-bottom:12px;}
+.comp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.comp-name{font-family:'Unbounded',sans-serif;font-size:11px;font-weight:700;color:#E74C3C;}
+.comp-threat.low{background:rgba(46,204,113,0.12);color:#2ECC71;}.comp-threat.mid{background:rgba(243,156,18,0.12);color:#F39C12;}.comp-threat.high{background:rgba(231,76,60,0.12);color:#E74C3C;}
+.comp-threat{font-size:10px;padding:2px 8px;border-radius:100px;}
+.comp-metrics{display:flex;gap:10px;flex-wrap:wrap;}
+.cm-item{display:flex;flex-direction:column;align-items:center;background:#1C1C22;border-radius:6px;padding:5px 9px;}
+.cm-val{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:#E74C3C;}
+.cm-lbl{font-size:9px;color:#7A7A8C;margin-top:1px;}
+.comp-news{font-size:11px;color:#7A7A8C;margin-top:6px;padding-top:6px;border-top:1px solid #242430;font-style:italic;}
+.comp-news strong{color:#E74C3C;}
+.news-screen{background:#141418;border:1.5px solid #242430;border-radius:14px;padding:20px;margin-bottom:14px;}
+.news-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #242430;}
+.news-item:last-child{border:none;}
+.news-source{flex-shrink:0;font-size:10px;font-weight:700;color:#D4A017;width:80px;}
+.news-text{font-size:12px;color:#E8E4DC;line-height:1.5;}
+.ni-pos{background:rgba(46,204,113,0.12);color:#2ECC71;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;display:inline-block;margin-top:2px;}
+.ni-neg{background:rgba(231,76,60,0.12);color:#E74C3C;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;display:inline-block;margin-top:2px;}
+.ni-neu{background:#242430;color:#7A7A8C;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;display:inline-block;margin-top:2px;}
+.invest-panel{background:#141418;border:1.5px solid rgba(212,160,23,0.3);border-radius:14px;padding:16px;margin-bottom:14px;}
+.invest-title{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#D4A017;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.invest-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;}
+.invest-label{font-size:11px;color:#E8E4DC;width:100px;flex-shrink:0;}
+.invest-slider{flex:1;height:4px;border-radius:2px;background:#242430;outline:none;cursor:pointer;-webkit-appearance:none;}
+.invest-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#D4A017;cursor:pointer;}
+.invest-val{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#D4A017;width:45px;text-align:right;}
+.ach-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:12px;}
+.ach-card{background:#141418;border:1.5px solid #242430;border-radius:10px;padding:11px;display:flex;gap:8px;align-items:flex-start;}
+.ach-card.unlocked{border-color:#D4A017;background:rgba(212,160,23,0.04);}
+.ach-icon{font-size:20px;flex-shrink:0;}
+.ach-name{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:#7A7A8C;margin-bottom:2px;}
+.ach-card.unlocked .ach-name{color:#D4A017;}
+.ach-desc{font-size:10px;color:#7A7A8C;line-height:1.4;}
+.ach-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1C1C22;border:2px solid #D4A017;border-radius:12px;padding:11px 16px;display:flex;align-items:center;gap:9px;z-index:500;opacity:0;transition:opacity 0.4s;pointer-events:none;white-space:nowrap;}
+.ach-toast.show{opacity:1;}
+.crisis-card{background:rgba(231,76,60,0.06);border:2px solid rgba(231,76,60,0.4);border-radius:14px;padding:18px;margin-bottom:14px;}
+.crisis-title{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:#E74C3C;margin-bottom:7px;}
+.human-card{background:rgba(155,89,182,0.06);border:1.5px solid rgba(155,89,182,0.3);border-radius:14px;padding:18px;margin-bottom:14px;}
+.human-title{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:#9B59B6;margin-bottom:8px;}
+.human-person{display:flex;align-items:center;gap:9px;margin-bottom:10px;background:#141418;border-radius:8px;padding:9px 11px;}
+.hp-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;background:#1C1C22;}
+.hp-role{font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;color:#9B59B6;letter-spacing:1px;text-transform:uppercase;}
+.hp-name{font-size:11px;font-weight:600;color:#E8E4DC;}
+.hp-quote{font-size:10px;color:#7A7A8C;font-style:italic;margin-top:1px;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+<header class="hdr">
+  <div class="logo">БИЗ<span>НЕС</span>-СИМУЛЯТОР</div>
+  <div class="hud" id="mainHud">
+    <div class="hi"><span>Квартал</span><strong id="hudQ">1/8</strong></div>
+    <div class="hsep"></div>
+    <div class="hi"><span>Выручка</span><strong id="hudR" class="g">—</strong></div>
+    <div class="hsep"></div>
+    <div class="hi"><span>Репутация</span><strong id="hudRep" class="g">—</strong></div>
+    <div class="hsep"></div>
+    <div class="hi"><span>Режим</span><strong id="hudD">—</strong></div>
+  </div>
+</header>
+
+<div class="scr on" id="s0">
+  <div class="ttl">Управляй российским<br><span>бизнесом</span> — и выживи</div>
+  <p class="sub">Реальные кейсы, цепочки событий и макрокризисы. CEO, CFO и CTO советуют. 8 кварталов до успеха или банкротства.</p>
+  <div class="intro-pills">
+    <div class="ip"><span style="color:#C8102E">●</span> Цепочки событий — причины и следствия</div>
+    <div class="ip"><span style="color:#D4A017">●</span> CEO / CFO / CTO советуют</div>
+    <div class="ip"><span style="color:#2ECC71">●</span> Финансовая модель: EBITDA, долг, кэш</div>
+    <div class="ip"><span style="color:#9B59B6">●</span> Визуализация роста компании</div>
+    <div class="ip"><span style="color:#3498DB">●</span> Режим преподавателя с отчётом</div>
+  </div>
+  <div class="brow">
+    <button class="btn" onclick="go('s1')">Начать игру →</button>
+    <button class="btn-o" onclick="go('sTeacher')">👨‍🏫 Режим преподавателя</button>
+  </div>
+</div>
+
+<div class="scr" id="s1">
+  <div class="ttl">Выбери <span>уровень</span></div>
+  <p class="sub">Определяет стартовый капитал, частоту макрокризисов и жёсткость рынка</p>
+  <div class="diff-grid">
+    <div class="dc e" onclick="pickDiff('easy',this)">
+      <div class="dc-emo">🟢</div><div class="dc-name">СТАРТАП</div>
+      <div class="dc-desc">Щадящие условия. Кризисов мало, банки охотно дают кредиты.</div>
+      <div class="dc-p">Капитал: 50 млн ₽</div>
+      <div class="dc-p">Ставка ЦБ: 8%</div>
+      <div class="dc-p">Макрокризисов: 1</div>
+    </div>
+    <div class="dc m" onclick="pickDiff('medium',this)">
+      <div class="dc-emo">🟡</div><div class="dc-name">МЕНЕДЖЕР</div>
+      <div class="dc-desc">Реалистичная Россия. Конкуренция, проверки, рубль скачет.</div>
+      <div class="dc-p">Капитал: 30 млн ₽</div>
+      <div class="dc-p">Ставка ЦБ: 16%</div>
+      <div class="dc-p">Макрокризисов: 2</div>
+    </div>
+    <div class="dc h" onclick="pickDiff('hard',this)">
+      <div class="dc-emo">🔴</div><div class="dc-name">ОЛИГАРХ</div>
+      <div class="dc-desc">Жёсткий рынок, санкции, дефицит кадров. Выжить — уже победа.</div>
+      <div class="dc-p">Капитал: 15 млн ₽</div>
+      <div class="dc-p">Ставка ЦБ: 21%</div>
+      <div class="dc-p">Макрокризисов: 3</div>
+    </div>
+  </div>
+  <div class="brow">
+    <button class="btn" id="btnD" onclick="go('s2')" disabled>Выбрать отрасль →</button>
+    <button class="btn-o" onclick="go('s0')">← Назад</button>
+  </div>
+</div>
+
+<div class="scr" id="s2">
+  <div class="ttl">Выбери <span>отрасль</span></div>
+  <p class="sub">Каждая отрасль — своя реальность: регуляторы, цепочки событий и конкуренты разные</p>
+  <div class="ind-grid" id="indGrid"></div>
+</div>
+
+<div class="scr" id="s3">
+  <div class="qbar" id="qbar"></div>
+  <div id="companyStage"></div>
+  <div id="macroTicker"></div>
+  <div id="finPanel"></div>
+  <div id="condBlock"></div>
+  <div id="gc"></div>
+</div>
+
+<div class="scr" id="s4"><div id="finalC"></div></div>
+<div class="scr" id="s5"><div id="debC"></div></div>
+
+<div class="scr" id="sTeacher">
+  <div class="ttl">Режим <span>преподавателя</span></div>
+  <p class="sub">Введите данные студента — в конце сформируется подробный отчёт о решениях и стратегии</p>
+  <div class="card">
+    <div class="card-ttl">Данные студента</div>
+    <div style="margin-bottom:11px">
+      <div style="font-size:11px;color:#7A7A8C;margin-bottom:4px">Имя студента</div>
+      <input id="studentName" type="text" placeholder="Иванов Иван" style="width:100%;background:#1C1C22;border:1.5px solid #242430;border-radius:8px;padding:9px 13px;color:#E8E4DC;font-family:'Golos Text',sans-serif;font-size:13px;outline:none;">
+    </div>
+    <div>
+      <div style="font-size:11px;color:#7A7A8C;margin-bottom:4px">Группа / курс</div>
+      <input id="studentGroup" type="text" placeholder="МЭ-301" style="width:100%;background:#1C1C22;border:1.5px solid #242430;border-radius:8px;padding:9px 13px;color:#E8E4DC;font-family:'Golos Text',sans-serif;font-size:13px;outline:none;">
+    </div>
+  </div>
+  <div class="brow">
+    <button class="btn" onclick="startTeacherMode()">Начать игру →</button>
+    <button class="btn-o" onclick="go('s0')">← Назад</button>
+  </div>
+</div>
+
+<div class="scr" id="sReport"><div id="reportC"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- FLOATING NAV -->
+<div class="float-nav" id="floatNav" style="display:none">
+  <button class="fn-btn rules" onclick="openModal('modalRules')" title="Правила">📖</button>
+  <button class="fn-btn terms" onclick="openModal('modalTerms')" title="Термины">💡</button>
+  <button class="fn-btn chart" onclick="openModal('modalChart')" title="Графики">📈</button>
+</div>
+
+<!-- MODAL: RULES -->
+<div class="modal-overlay" id="modalRules">
+  <div class="modal-box">
+    <div class="modal-hdr"><div class="modal-title">📖 Сюжет и правила</div><button class="modal-close" onclick="closeModal('modalRules')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:16px"><div style="font-family:Unbounded,sans-serif;font-size:12px;font-weight:700;color:#C8102E;margin-bottom:7px">🇷🇺 Сюжет</div><div style="font-size:13px;color:#E8E4DC;line-height:1.7">Вы — генеральный директор российской компании. Идёт 2022–2025 год: западные компании уходят, рубль скачет, ставка ЦБ бьёт рекорды. Рынок переделывается прямо у вас на глазах.<br><br>Ваша задача — провести компанию через <strong style="color:#D4A017">8 кварталов</strong>, принимая решения в реальных условиях. В конце вы узнаете, какой стратег в вас живёт.</div></div>
+      <div style="margin-bottom:16px"><div style="font-family:Unbounded,sans-serif;font-size:12px;font-weight:700;color:#C8102E;margin-bottom:7px">🎮 Как играть</div><div style="font-size:12px;color:#7A7A8C;line-height:1.8"><div>1️⃣ <strong style="color:#E8E4DC">Уровень сложности</strong> — от Стартапа до Олигарха</div><div>2️⃣ <strong style="color:#E8E4DC">Отрасль</strong> — у каждой своя цепочка из 5 событий</div><div>3️⃣ <strong style="color:#E8E4DC">Каждый квартал</strong> — событие и выбор. CFO, CTO, CMO советуют</div><div>4️⃣ <strong style="color:#E8E4DC">Квартал 4</strong> — стратегическая дилемма</div><div>5️⃣ <strong style="color:#E8E4DC">Квартал 6</strong> — синергии за правильные решения</div><div>6️⃣ <strong style="color:#E8E4DC">Кварталы 3,5,7</strong> — возможны макрокризисы</div></div></div>
+      <div style="margin-bottom:16px"><div style="font-family:Unbounded,sans-serif;font-size:12px;font-weight:700;color:#C8102E;margin-bottom:7px">📊 Метрики</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><div style="background:#1C1C22;border-radius:8px;padding:10px"><div style="font-size:9px;color:#D4A017;font-weight:700;margin-bottom:3px">ВЫРУЧКА</div><div style="font-size:11px;color:#7A7A8C">Квартальная. Цель — рост.</div></div><div style="background:#1C1C22;border-radius:8px;padding:10px"><div style="font-size:9px;color:#D4A017;font-weight:700;margin-bottom:3px">EBITDA</div><div style="font-size:11px;color:#7A7A8C">Операционная прибыль.</div></div><div style="background:#1C1C22;border-radius:8px;padding:10px"><div style="font-size:9px;color:#D4A017;font-weight:700;margin-bottom:3px">РЕПУТАЦИЯ</div><div style="font-size:11px;color:#7A7A8C">Доверие. Ниже 30 — кризис.</div></div><div style="background:#1C1C22;border-radius:8px;padding:10px"><div style="font-size:9px;color:#D4A017;font-weight:700;margin-bottom:3px">КЭШ</div><div style="font-size:11px;color:#7A7A8C">Деньги на счету. Ноль — банкрот.</div></div></div></div>
+      <div><div style="font-family:Unbounded,sans-serif;font-size:12px;font-weight:700;color:#C8102E;margin-bottom:7px">🏆 Оценка</div><div style="font-size:12px;color:#7A7A8C;line-height:1.8"><span style="color:#2ECC71;font-weight:700">A (80–100%)</span> — уровень Грефа<br><span style="color:#D4A017;font-weight:700">B (60–79%)</span> — хороший управленец<br><span style="color:#F39C12;font-weight:700">C (40–59%)</span> — бизнес выжил<br><span style="color:#E74C3C;font-weight:700">D (0–39%)</span> — на грани банкротства</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TERMS -->
+<div class="modal-overlay" id="modalTerms">
+  <div class="modal-box">
+    <div class="modal-hdr"><div class="modal-title">💡 Термины и факты</div><button class="modal-close" onclick="closeModal('modalTerms')">✕</button></div>
+    <div class="modal-body" id="termsBody"></div>
+  </div>
+</div>
+
+<!-- MODAL: CHARTS -->
+<div class="modal-overlay" id="modalChart">
+  <div class="modal-box">
+    <div class="modal-hdr"><div class="modal-title">📈 Динамика по кварталам</div><button class="modal-close" onclick="closeModal('modalChart')">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:#7A7A8C;margin-bottom:12px">Данные накапливаются по мере прохождения кварталов</div>
+      <div class="chart-wrap"><div class="chart-title">Выручка и EBITDA (млн ₽)</div><canvas id="chartRevenue" height="150"></canvas></div>
+      <div class="chart-wrap"><div class="chart-title">Репутация и доля рынка (%)</div><canvas id="chartRep" height="150"></canvas></div>
+      <div class="chart-wrap"><div class="chart-title">Кэш и долг (млн ₽)</div><canvas id="chartCash" height="150"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div class="tip-overlay" id="tipOverlay">
+  <div class="tip-box">
+    <button class="tip-close" onclick="closeTip()">✕</button>
+    <div class="tip-label">💡 Теория</div>
+    <div class="tip-term" id="tipTerm"></div>
+    <div class="tip-body" id="tipBody"></div>
+  </div>
+</div>
+<script>
+// ===== GLOBAL STATE VARIABLES =====
+var G_HISTORY = [];
+var G_SHOWN_NEWS = [];
+var G_NEWS_CALLBACK = null;
+var G_CRISIS_USED = [];
+var G_HUMAN_USED = [];
+var G_UNLOCKED_ACH = [];
+var G_CUR_REP_CRISIS = null;
+var G_CUR_REP_CRISIS_DEC = '';
+var G_CUR_HUMAN_EVENT = null;
+var G_CUR_HUMAN_DEC = '';
+// ===================================
+var DIFF={easy:{lbl:'Стартап',cls:'e',capital:50,mul:0.75,crises:1},medium:{lbl:'Менеджер',cls:'m',capital:30,mul:1.0,crises:2},hard:{lbl:'Олигарх',cls:'h',capital:15,mul:1.3,crises:3}};
+var ADVISORS={cfo:{role:'CFO',name:'Алексей К.',color:'#3498DB',bg:'rgba(52,152,219,0.15)',ico:'💼'},cto:{role:'CTO',name:'Дмитрий В.',color:'#2ECC71',bg:'rgba(46,204,113,0.15)',ico:'💻'},cmo:{role:'CMO',name:'Мария Н.',color:'#9B59B6',bg:'rgba(155,89,182,0.15)',ico:'📣'}};
+var MACROS=[
+  {id:'mc1',ttl:'ЦБ поднял ставку до 21%',body:'Кредиты подорожали. Инвестиционный спрос падает. Стоимость обслуживания долга выросла.',badge:'Ставка +5 п.п.',impact:{debt:5,cash:-3}},
+  {id:'mc2',ttl:'Рубль упал на 18%',body:'Импортные составляющие подорожали. Конкуренты поднимают цены. Покупательная способность снижается.',badge:'₽ −18%',impact:{rev:-4,cos:3,rep:-2}},
+  {id:'mc3',ttl:'Новый пакет санкций',body:'Западные партнёры заморозили контракты. Часть поставок под угрозой.',badge:'Санкции',impact:{rev:-5,cos:4,rep:-3}},
+  {id:'mc4',ttl:'Дефицит кадров: зарплаты +30%',body:'Рынок труда перегрет. Удержание сотрудников стало критичным.',badge:'Кадры −20%',impact:{cos:6,rep:-2}},
+  {id:'mc5',ttl:'Налоговая реформа: НДС +2%',body:'Правительство повысило НДС. Маржа сжимается.',badge:'НДС +2%',impact:{rev:-3,cos:2}},
+  {id:'mc6',ttl:'Логистика: тарифы +40%',body:'Дефицит водителей и вагонов. Доставка подорожала.',badge:'Логистика +40%',impact:{cos:5,rep:-3}}
+];
+var INDS=[
+  {id:'tech',ico:'💻',name:'IT и технологии',desc:'SaaS-продукт для b2b. Импортозамещение в тренде.',tags:[{t:'🔥 Импортозамещение',c:'hot'},{t:'Кадровый голод',c:'warn'},{t:'Госконтракты',c:'cool'}],
+   conds:[{ico:'🏛️',t:'Реестр ПО — доступ к 60% госзакупок'},{ico:'🌍',t:'100 000+ айтишников уехали — дефицит кадров'},{ico:'💰',t:'Льготы: налог 0%, взносы 7.6%'},{ico:'⚡',t:'Конкуренты: 1С, Битрикс, МойСклад'}],
+   sm:{rev:8,cos:5,rep:65,shr:12,cash:0,debt:0},
+   chain:{name:'ERP-экспансия',steps:['Выход на ERP','Нехватка кадров','Первый клиент','Кибератака','IPO на Мосбирже'],evs:['tc1','tc2','tc3','tc4','tc5']},
+   extraEvs:['gn1','gn2'],dil:'tdil',syns:['ts1','ts2'],
+   dbc:[{ico:'🟢',n:'Астра Групп',d:'IPO 2023 г., оценка 150 млрд ₽. Без реестра ПО рост в 3× медленнее.'},{ico:'🔵',n:'Контур',d:'3 млн клиентов. Не конкурировали с 1С — выбрали нишу.'},{ico:'🔴',n:'HeadHunter',d:'После ухода LinkedIn — монополист. Выручка ×2.'}],
+   bld:['🏠','🏢','🏬','🏛️'],staff:[[1],[3],[6],[10]],regions:['Москва','СПб','Казань','Новосибирск','Екатеринбург','Краснодар']},
+  {id:'retail',ico:'🛒',name:'Розничная торговля',desc:'Сеть магазинов или онлайн-ретейл. Маркетплейсы и маржа.',tags:[{t:'Wildberries/Ozon',c:'hot'},{t:'Инфляция',c:'warn'},{t:'Локализация',c:'cool'}],
+   conds:[{ico:'📦',t:'WB и Ozon — 70%+ рынка, комиссия 38%'},{ico:'📈',t:'Инфляция 8–12%: наценки съедаются'},{ico:'🏷️',t:'Zara→Gloria Jeans, IKEA→Hoff'},{ico:'⚖️',t:'Маркировка «Честный знак» обязательна'}],
+   sm:{rev:20,cos:17,rep:55,shr:8,cash:0,debt:5},
+   chain:{name:'Омниканальная экспансия',steps:['WB vs сайт','Логистика','Шоурум','Проверка РПН','Регионы'],evs:['rc1','rc2','rc3','rc4','rc5']},
+   extraEvs:['gn1','gn3'],dil:'rdil',syns:['rs1','rs2'],
+   dbc:[{ico:'🍏',n:'ВкусВилл',d:'СТМ + здоровое питание. Рентабельность выше рынка на 5 п.п.'},{ico:'🔶',n:'Fix Price',d:'Единая цена при инфляции — предсказуемость ценится.'},{ico:'🚗',n:'ВсеИнструменты.ру',d:'Омниканал. 100+ млрд ₽. Данные дороже склада.'}],
+   bld:['🏪','🏬','🏬','🏢'],staff:[[2],[4],[7],[12]],regions:['Москва','СПб','Екатеринбург','Казань','Ростов','Уфа']},
+  {id:'food',ico:'🍔',name:'Общепит и фудтех',desc:'Кафе или доставка. Место McDonald\'s свободно.',tags:[{t:'🔥 Вакуум брендов',c:'hot'},{t:'Доставка растёт',c:'cool'},{t:'Кадры',c:'warn'}],
+   conds:[{ico:'🍟',t:'McDonald\'s ушёл — рынок открыт'},{ico:'🛵',t:'Яндекс Еда — 80% доставки, комиссия 35%'},{ico:'👨‍🍳',t:'Текучка: 120–180% в год'},{ico:'📱',t:'Лояльность — стандарт, без неё −25%'}],
+   sm:{rev:12,cos:10,rep:60,shr:5,cash:0,debt:0},
+   chain:{name:'Сетевая экспансия',steps:['Первое кафе','Dark kitchen','Лояльность','Франшиза','Федеральный бренд'],evs:['fc1','fc2','fc3','fc4','fc5']},
+   extraEvs:['gn1','gn2'],dil:'fdil',syns:['fs1','fs2'],
+   dbc:[{ico:'🍕',n:'Dodo Pizza',d:'IT-система + открытая модель. 900+ точек.'},{ico:'🥗',n:'«Теремок»',d:'Не конкурировали напрямую — устояли и выиграли.'},{ico:'⚡',n:'Яндекс Еда',d:'Платформа + «Лавка» + доставка = маржа +12 п.п.'}],
+   bld:['🍜','🍽️','🏪','🏢'],staff:[[2],[5],[8],[12]],regions:['Москва','СПб','Казань','Краснодар','Нижний Новгород','Воронеж']},
+  {id:'mfg',ico:'🏭',name:'Производство',desc:'Машиностроение или лёгпром. Импортозамещение — приоритет.',tags:[{t:'Господдержка',c:'cool'},{t:'Санкции',c:'hot'},{t:'Оборудование',c:'warn'}],
+   conds:[{ico:'🏗️',t:'ФРП: займы 1–5% для производителей'},{ico:'⚙️',t:'70% оборудования было импортным'},{ico:'👷',t:'Дефицит рабочих: 1.5 млн вакансий'},{ico:'📊',t:'СПИК 2.0, квоты на российскую продукцию'}],
+   sm:{rev:25,cos:22,rep:50,shr:6,cash:0,debt:10},
+   chain:{name:'СПИК и масштаб',steps:['Поставщик ушёл','Новая цепочка','СПИК 2.0','Роботизация','Экспорт СНГ'],evs:['mc1e','mc2e','mc3e','mc4e','mc5e']},
+   extraEvs:['gn1','gn3'],dil:'mdil',syns:['ms1','ms2'],
+   dbc:[{ico:'✈️',n:'КАМАЗ',d:'Перешли на китайское за 18 мес. Производство не остановилось.'},{ico:'🚜',n:'Ростсельмаш',d:'Заняли долю John Deere. Экспорт в 30+ стран.'},{ico:'💊',n:'Фармасинтез',d:'Локализация субстанций. Госконтракты 8 млрд ₽.'}],
+   bld:['🏚️','🏭','🏭','🏗️'],staff:[[1],[3],[6],[10]],regions:['Москва','Тольятти','Челябинск','Екатеринбург','Нижний Новгород','Красноярск']},
+  {id:'fin',ico:'🏦',name:'Финансы и fintech',desc:'Необанк или страховой стартап. Регулятор строг.',tags:[{t:'ЦБ регулирует',c:'warn'},{t:'🔥 Цифровой рубль',c:'hot'},{t:'Безнал растёт',c:'cool'}],
+   conds:[{ico:'🏛️',t:'ЦБ: нормативы Базель III, отзыв лицензии'},{ico:'📱',t:'СБП обязательна с 2023 г.'},{ico:'🔐',t:'152-ФЗ: данные только в РФ'},{ico:'💳',t:'Т-Банк и Сбер — стандарты рынка'}],
+   sm:{rev:15,cos:11,rep:58,shr:3,cash:0,debt:0},
+   chain:{name:'Цифровой банк',steps:['Лицензия ЦБ','10К клиентов','Цифровой рубль','Кредиты','Экосистема'],evs:['fn1','fn2','fn3','fn4','fn5']},
+   extraEvs:['gn1','gn2'],dil:'fndil',syns:['fns1','fns2'],
+   dbc:[{ico:'💛',n:'Т-Банк',d:'40 млн клиентов без офисов. Технология вместо недвижимости.'},{ico:'💚',n:'Сбер',d:'Экосистема. Данные о клиентах = новая нефть.'},{ico:'🟣',n:'Яндекс Пэй',d:'Синергия платёжного сервиса и трафика Маркета.'}],
+   bld:['🏠','🏢','🏦','🏛️'],staff:[[2],[4],[7],[10]],regions:['Москва','СПб','Казань','Новосибирск','Краснодар','Ростов']}
+];
+var EVS={
+tc1:{type:'opportunity',ttl:'SAP ушёл — рынок ERP свободен',body:'12 000 компаний ищут замену. Рынок — 80 млрд ₽ в год.',ctx:'<strong>Контекст:</strong> Уход SAP в 2022 г. создал крупнейший вакуум на рынке корпоративного ПО.',src:'По аналогии с уходом SAP из России',adv:{cfo:'Считаю ROI — ERP дорого разрабатывать.',cto:'Технология готова на 80%. MVP за 3 месяца.',cmo:'Шанс раз в десять лет — входить агрессивно.'},
+decs:[{id:'A',dt:'Быстрый выход на ERP',ds:'MVP за 3 месяца, демпинг',who:'cmo',d:{rev:6,cos:-4,rep:-5,shr:8,cash:-4}},
+      {id:'B',dt:'Партнёрство с «Галактикой»',ds:'Через готовую сеть, меньше риска',who:'ceo',d:{rev:4,cos:-1,rep:5,shr:5,cash:-1}},
+      {id:'C',dt:'Остаться в своей нише',ds:'Усилить текущий продукт',who:'cfo',d:{rev:2,cos:0,rep:3,shr:2,cash:2}}]},
+tc2:{type:'risk',ttl:'Конкурент переманил 15 разработчиков',body:'Senior-команда ушла в Яндекс и Сбер. Сроки сдвигаются.',ctx:'<strong>Последствие:</strong> Выход на новый рынок создал нагрузку — конкуренты воспользовались.',src:'Типичная ситуация IT-рынка 2023–2024 гг.',adv:{cfo:'Опционы дешевле зарплат в долгосроке.',cto:'Нам нужны люди прямо сейчас. Поднимаем оффер.',cmo:'Работодатель года — тоже маркетинг.'},
+decs:[{id:'A',dt:'Поднять зарплаты на 40%',ds:'Быстро и дорого',who:'cto',d:{rev:0,cos:-5,rep:5,shr:0,cash:-5}},
+      {id:'B',dt:'Опционы + удалёнка + льготы',ds:'Дешевле, работает через 3–6 месяцев',who:'cfo',d:{rev:0,cos:-2,rep:7,shr:0,cash:-2}},
+      {id:'C',dt:'Аутсорсить часть разработки',ds:'Быстро закрыть дыру',who:'ceo',d:{rev:0,cos:-3,rep:-2,shr:0,cash:-3}}]},
+tc3:{type:'opportunity',ttl:'«Газпромнефть» запрашивает демо ERP',body:'Топ-50 компания. Контракт на 120 млн ₽. Требуют кастомизацию.',ctx:'<strong>Поворот:</strong> Один корпоративный клиент = 60% годовой выручки.',src:'Типичная схема b2b SaaS продаж',adv:{cfo:'120 млн — наш план на год. Берём.',cto:'Кастомизация убьёт нас. Стандартный продукт.',cmo:'Это референс для всего рынка. Бесценно.'},
+decs:[{id:'A',dt:'Согласиться на кастомизацию',ds:'Дорого в разработке, контракт подписан',who:'cfo',d:{rev:10,cos:-6,rep:8,shr:5,cash:8}},
+      {id:'B',dt:'Убедить взять стандартный продукт',ds:'Меньше затрат, риск потери сделки',who:'cto',d:{rev:7,cos:-1,rep:5,shr:4,cash:7}},
+      {id:'C',dt:'Отказаться — не наш профиль',ds:'Остаться в нише',who:'cto',d:{rev:1,cos:0,rep:0,shr:0,cash:1}}]},
+tc4:{type:'risk',ttl:'Кибератака: данные 80 000 клиентов утекли',body:'Группировка Killnet взломала базу. РКН требует уведомления.',ctx:'<strong>Триггер:</strong> Рост привлёк внимание. Атаки на IT выросли в 4× за 2 года.',src:'По аналогии с утечками Яндекс.Еда, СДЭК, МТС Банка',adv:{cfo:'Каждый час молчания — риск штрафа.',cto:'Нужно 48 часов, чтобы закрыть дыру.',cmo:'Прозрачность сохранит нас. Молчание убьёт.'},
+decs:[{id:'A',dt:'Публичное заявление + компенсация',ds:'Дорого, но доверие сохранено',who:'cmo',d:{rev:-2,cos:-4,rep:-3,shr:-1,cash:-4}},
+      {id:'B',dt:'Тихое уведомление РКН',ds:'Формально правильно, риск огласки',who:'cfo',d:{rev:-1,cos:-2,rep:-10,shr:-2,cash:-2}},
+      {id:'C',dt:'PR-команда + антикризисники',ds:'Управлять нарративом профессионально',who:'cmo',d:{rev:-1,cos:-3,rep:-2,shr:0,cash:-3}}]},
+tc5:{type:'opportunity',ttl:'Инвесторы зовут на IPO на Мосбирже',body:'Оценка компании — 2.5 млрд ₽. IPO откроет доступ к капиталу.',ctx:'<strong>Итог пути:</strong> Как Астра Групп в 2023 г. — выйти на публичный рынок.',src:'По аналогии с IPO Астра Групп и Positive Technologies',adv:{cfo:'IPO — капитал без долга. Идём.',cmo:'Публичность усилит бренд в 10 раз.',cto:'Нужно ещё 2 года для готовности продукта.'},
+decs:[{id:'A',dt:'Готовиться к IPO на Мосбирже',ds:'Раскрытие + аудит + road show',who:'cfo',d:{rev:12,cos:-5,rep:10,shr:8,cash:20}},
+      {id:'B',dt:'Привлечь стратегического инвестора',ds:'Контроль сохраняется, оценка ниже',who:'ceo',d:{rev:5,cos:-1,rep:6,shr:4,cash:10}},
+      {id:'C',dt:'Остаться частной компанией',ds:'Независимость важнее капитала',who:'cto',d:{rev:2,cos:0,rep:2,shr:1,cash:2}}]},
+rc1:{type:'market',ttl:'Wildberries или собственный сайт?',body:'WB даёт трафик, но комиссия 38%. Свой сайт — свобода, но вложения.',ctx:'<strong>Развилка:</strong> Это решение определит модель монетизации на годы.',src:'Реальная дилемма каждого российского e-com игрока',adv:{cfo:'WB окупается быстрее. Сайт — 18+ месяцев.',cmo:'Данные о клиентах — главный актив. На WB они не ваши.',ceo:'Можно делать и то, и другое поэтапно.'},
+decs:[{id:'A',dt:'Фокус на WB и Ozon',ds:'Быстрый старт, высокая комиссия',who:'cfo',d:{rev:8,cos:-3,rep:0,shr:7,cash:4}},
+      {id:'B',dt:'Строить собственный канал',ds:'Данные и маржа — ваши',who:'cmo',d:{rev:3,cos:-5,rep:6,shr:2,cash:-2}},
+      {id:'C',dt:'Омниканально — и там, и там',ds:'Распределить бюджет',who:'ceo',d:{rev:5,cos:-4,rep:3,shr:4,cash:0}}]},
+rc2:{type:'risk',ttl:'Логистический кризис: склад затоплен',body:'Паводок повредил региональный склад. 15 млн ₽ товара. Страховка — 40%.',ctx:'<strong>Последствие:</strong> Логистическая инфраструктура — ахиллесова пята ретейла.',src:'Типичный операционный риск',adv:{cfo:'Диверсифицировать склады — давно пора.',cmo:'Клиентам нужно объяснить задержки честно.',ceo:'Используем кризис для реструктуризации.'},
+decs:[{id:'A',dt:'Помочь клиентам + возврат средств',ds:'Дорого, но лояльность сохранена',who:'cmo',d:{rev:-4,cos:-5,rep:4,shr:-1,cash:-7}},
+      {id:'B',dt:'Минимизировать выплаты',ds:'Сохраняем кэш, теряем клиентов',who:'cfo',d:{rev:-3,cos:-2,rep:-5,shr:-2,cash:-3}},
+      {id:'C',dt:'Перейти на фулфилмент WB',ds:'Отдать логистику на аутсорс',who:'ceo',d:{rev:-1,cos:2,rep:0,shr:0,cash:-1}}]},
+rc3:{type:'opportunity',ttl:'IKEA ушла — мебельный ретейл свободен',body:'12 млн лояльных покупателей ищут альтернативу. Hoff и Леруа уже начали.',ctx:'<strong>Вакуум:</strong> Уход IKEA — крупнейшая пустота в российском ретейле за 20 лет.',src:'Реальный уход IKEA из России, март 2022 г.',adv:{cfo:'Требует 50+ млн инвестиций. Риск высокий.',cmo:'Первый, кто займёт нишу, получит лояльность на 10 лет.',ceo:'Можно войти через маркетплейсы без капексов.'},
+decs:[{id:'A',dt:'Открыть 3 мебельных шоурума',ds:'Агрессивно, дорого, высокий потенциал',who:'cmo',d:{rev:8,cos:-8,rep:6,shr:6,cash:-8}},
+      {id:'B',dt:'Запустить мебель на маркетплейсах',ds:'Тест спроса без капексов',who:'cfo',d:{rev:4,cos:-2,rep:3,shr:3,cash:-1}},
+      {id:'C',dt:'Остаться в своей нише',ds:'Не распылять ресурсы',who:'ceo',d:{rev:1,cos:0,rep:0,shr:0,cash:1}}]},
+rc4:{type:'risk',ttl:'Роспотребнадзор: проверка «Честного знака»',body:'2 000 товаров без маркировки. Штраф — до 300 000 ₽ за единицу.',ctx:'<strong>Системный риск:</strong> «Честный знак» обязателен для большинства категорий с 2022 г.',src:'Реальные штрафы по системе «Честный знак»',adv:{cfo:'Заплатить и автоматизировать. Повторная проверка нас уничтожит.',cmo:'Превратим в PR: «Мы за прозрачность».',ceo:'Оспорить — прецедент важен для отрасли.'},
+decs:[{id:'A',dt:'Штраф + автоматизировать маркировку',ds:'Закрыть вопрос навсегда',who:'cfo',d:{rev:0,cos:-5,rep:2,shr:0,cash:-6}},
+      {id:'B',dt:'Оспорить в суде',ds:'Риск, но прецедент поможет рынку',who:'ceo',d:{rev:0,cos:-2,rep:-3,shr:0,cash:-2}},
+      {id:'C',dt:'Изъять товар до маркировки',ds:'Потери продаж, без штрафа',who:'cmo',d:{rev:-4,cos:-2,rep:3,shr:-1,cash:-4}}]},
+rc5:{type:'opportunity',ttl:'Региональная экспансия: 5 новых городов',body:'Высокий спрос в Екатеринбурге, Казани, Ростове. Франшиза vs собственные точки.',ctx:'<strong>Масштаб:</strong> Лидеры ретейла — всегда федеральные сети.',src:'Стратегия федерализации российского ретейла',adv:{cfo:'Франшиза — капитал партнёров. Наши не тратим.',cmo:'Собственные точки — контроль качества бренда.',ceo:'Поэтапно: сначала 1–2 пилота.'},
+decs:[{id:'A',dt:'Запустить франшизу',ds:'Быстро, с чужим капиталом',who:'cfo',d:{rev:10,cos:-3,rep:4,shr:8,cash:5}},
+      {id:'B',dt:'Открыть собственные точки',ds:'Медленно, зато контроль',who:'cmo',d:{rev:7,cos:-8,rep:7,shr:6,cash:-8}},
+      {id:'C',dt:'Пилот в 1 городе',ds:'Осторожный путь',who:'ceo',d:{rev:3,cos:-2,rep:3,shr:2,cash:-2}}]},
+fc1:{type:'opportunity',ttl:'Открылось место у метро — бывший McDonald\'s',body:'«Вкусно и точка» не продлила аренду. 400 м² у метро. Залог 8 млн ₽, 5 лет.',ctx:'<strong>Старт:</strong> A-локации освободились впервые за 20 лет.',src:'Типичная ситуация после ухода McDonald\'s',adv:{cfo:'Окупаемость — не менее 4 лет. Рискованно.',cmo:'Это не просто точка — это флагман и PR.',ceo:'Если не мы — займут конкуренты.'},
+decs:[{id:'A',dt:'Взять всё — флагманское кафе',ds:'Максимальный охват, высокий риск',who:'cmo',d:{rev:8,cos:-8,rep:7,shr:5,cash:-8}},
+      {id:'B',dt:'Половину в субаренду партнёру',ds:'Снизить риск',who:'cfo',d:{rev:4,cos:-4,rep:4,shr:3,cash:-4}},
+      {id:'C',dt:'Отказаться — слишком дорого',ds:'Сохранить капитал',who:'cfo',d:{rev:0,cos:0,rep:-1,shr:0,cash:0}}]},
+fc2:{type:'opportunity',ttl:'Dark kitchen: кухня-призрак для доставки',body:'Аренда в 3× дешевле, работа только на доставку. Яндекс Еда предлагает партнёрство.',ctx:'<strong>Новая модель:</strong> Dark kitchen даёт +25% выручки при той же команде.',src:'Модель Яндекс Еда и CloudKitchens в России',adv:{cfo:'Экономика лучше, чем у обычного ресторана.',cto:'Нужна IT-интеграция с агрегаторами.',cmo:'Доставка — это отдельный бренд.'},
+decs:[{id:'A',dt:'Новый бренд под dark kitchen',ds:'Отдельный бренд для доставки',who:'cmo',d:{rev:7,cos:-4,rep:5,shr:4,cash:-4}},
+      {id:'B',dt:'Добавить доставку к основному кафе',ds:'Без нового бренда, проще',who:'cfo',d:{rev:4,cos:-2,rep:3,shr:2,cash:-2}},
+      {id:'C',dt:'Сосредоточиться на зале',ds:'Качество важнее масштаба',who:'ceo',d:{rev:1,cos:0,rep:2,shr:0,cash:1}}]},
+fc3:{type:'market',ttl:'Программа лояльности: строить или купить?',body:'Без приложения теряем 25% аудитории. Разработка — 6 мес., 5 млн ₽.',ctx:'<strong>Данные:</strong> Клиенты с картой лояльности покупают на 40% чаще.',src:'Стандарт российского рынка общепита 2023 г.',adv:{cfo:'Купить готовое — в 3× дешевле.',cto:'Своё даёт гибкость и данные.',cmo:'Клиентам важен кешбэк, а не технология.'},
+decs:[{id:'A',dt:'Разработать своё приложение',ds:'Долго, дорого, но данные ваши',who:'cto',d:{rev:5,cos:-5,rep:7,shr:4,cash:-5}},
+      {id:'B',dt:'Купить готовое B2B решение',ds:'Быстро и дёшево',who:'cfo',d:{rev:4,cos:-2,rep:4,shr:3,cash:-2}},
+      {id:'C',dt:'Карточки лояльности',ds:'Дёшево, без данных',who:'cmo',d:{rev:2,cos:-1,rep:2,shr:1,cash:-1}}]},
+fc4:{type:'risk',ttl:'Франшизный скандал: ролик набрал 2 млн просмотров',body:'Партнёр уронил качество. Бренд под угрозой.',ctx:'<strong>Уязвимость:</strong> Франшиза — скорость роста ценой контроля.',src:'По аналогии с кризисами Dodo Pizza и других сетей',adv:{cfo:'Расторгнуть и взять точку под контроль.',cmo:'Скорость реакции в соцсетях решает всё.',ceo:'Нужна новая система контроля качества.'},
+decs:[{id:'A',dt:'Расторгнуть + публичное извинение',ds:'Дорого, но бренд спасён',who:'cmo',d:{rev:-3,cos:-3,rep:-2,shr:-1,cash:-3}},
+      {id:'B',dt:'Выкупить точку обратно в сеть',ds:'Убытки сейчас, контроль потом',who:'cfo',d:{rev:-2,cos:-6,rep:2,shr:0,cash:-6}},
+      {id:'C',dt:'Внедрить систему контроля на всю сеть',ds:'Превентивно',who:'ceo',d:{rev:0,cos:-4,rep:5,shr:1,cash:-4}}]},
+fc5:{type:'opportunity',ttl:'Инвестфонд: 200 млн ₽ на федеральную экспансию',body:'Условие — 30% компании. 10 городов за 2 года.',ctx:'<strong>Финал:</strong> Dodo Pizza прошли этот путь за 8 лет, Теремок — за 20.',src:'Реальная модель масштабирования сетей общепита',adv:{cfo:'200 млн за 30% — справедливо.',cmo:'Федеральный бренд — другой уровень.',ceo:'Нам нужна независимость. Может, долг?'},
+decs:[{id:'A',dt:'Принять инвестиции — федеральный рост',ds:'+200 млн, −30% компании',who:'cmo',d:{rev:12,cos:-6,rep:8,shr:10,cash:15}},
+      {id:'B',dt:'Долговое финансирование',ds:'Дорого по ставке, но контроль',who:'ceo',d:{rev:8,cos:-4,rep:5,shr:6,cash:8}},
+      {id:'C',dt:'Органический рост',ds:'Медленно, полный контроль',who:'cfo',d:{rev:4,cos:-2,rep:4,shr:3,cash:2}}]},
+'mc1e':{type:'risk',ttl:'Siemens прекратил отгрузки оборудования',body:'Ключевой поставщик вышел из-за санкций. Запасов на 2 месяца.',ctx:'<strong>Кризис цепочки:</strong> 70% промоборудования было импортным до 2022 г.',src:'Реальная ситуация с промышленным оборудованием',adv:{cfo:'Китайские аналоги дешевле на 25%.',cto:'Качество китайского оборудования вызывает вопросы.',ceo:'Параллельный импорт пока законен.'},
+decs:[{id:'A',dt:'Перейти на китайских поставщиков',ds:'SMTCL, Dalian — быстрее и дешевле',who:'cfo',d:{rev:0,cos:3,rep:-2,shr:0,cash:-3}},
+      {id:'B',dt:'Параллельный импорт через Казахстан',ds:'Оригинал, но дороже на 35%',who:'ceo',d:{rev:0,cos:-4,rep:2,shr:0,cash:-5}},
+      {id:'C',dt:'Отечественный аналог с ФРП-займом',ds:'6–9 месяцев ожидания',who:'cto',d:{rev:-3,cos:-2,rep:5,shr:0,cash:-2}}]},
+'mc2e':{type:'opportunity',ttl:'Новая цепочка выстроена — цены выросли',body:'Адаптация завершена. Клиенты ценят стабильность. Можно поднять цены на 15%.',ctx:'<strong>Результат кризиса:</strong> Компании, которые быстро переключились, выиграли рынок.',src:'Опыт КАМАЗа и производителей в 2022–2023 гг.',adv:{cfo:'Поднимаем цены — рынок не против.',cmo:'Репутация надёжного поставщика бесценна.',ceo:'Диверсифицируем поставщиков превентивно.'},
+decs:[{id:'A',dt:'Поднять цены на 15%',ds:'Рост выручки и репутации',who:'cfo',d:{rev:8,cos:0,rep:6,shr:3,cash:8}},
+      {id:'B',dt:'Сохранить цены — захватить долю',ds:'Отказаться от прибыли ради доли',who:'cmo',d:{rev:3,cos:0,rep:4,shr:7,cash:3}},
+      {id:'C',dt:'Диверсифицировать поставщиков',ds:'Страховка от следующего кризиса',who:'ceo',d:{rev:2,cos:-3,rep:5,shr:2,cash:-2}}]},
+'mc3e':{type:'opportunity',ttl:'СПИК 2.0: госзаказ на 400 млн ₽',body:'Минпромторг: локализация 70% → налоговые льготы + контракт на 10 лет.',ctx:'<strong>Господдержка:</strong> СПИК 2.0 — главный инструмент промышленной политики.',src:'Реальная программа СПИК 2.0',adv:{cfo:'400 млн — стабильность на 10 лет. Подписываем.',cto:'10 лет — потеря гибкости.',ceo:'Переговоры об условиях важнее ответа да/нет.'},
+decs:[{id:'A',dt:'Подписать СПИК',ds:'Стабильность, но меньше гибкости',who:'cfo',d:{rev:10,cos:-5,rep:8,shr:5,cash:10}},
+      {id:'B',dt:'Переговоры — только часть обязательств',ds:'Баланс льгот и свободы',who:'ceo',d:{rev:5,cos:-2,rep:5,shr:3,cash:5}},
+      {id:'C',dt:'Отказаться — работать на рынке',ds:'Независимость',who:'cto',d:{rev:2,cos:0,rep:0,shr:1,cash:2}}]},
+'mc4e':{type:'market',ttl:'Роботизация или люди?',body:'ФОТ вырос на 40%. Роботизированная линия — 30 млн ₽, окупается за 3 года.',ctx:'<strong>Дилемма КАМАЗ:</strong> Автоматизация неизбежна, но социальные последствия реальны.',src:'По аналогии с автоматизацией на КАМАЗ и Ростсельмаш',adv:{cfo:'ROI роботов — 3 года. После — чистая прибыль.',cmo:'Увольнения дадут медиаскандал.',ceo:'Программа переобучения снижает удар.'},
+decs:[{id:'A',dt:'Роботизация + программа переобучения',ds:'Инвестиция с человеческим лицом',who:'ceo',d:{rev:3,cos:5,rep:-2,shr:4,cash:-8}},
+      {id:'B',dt:'Роботизация без программы',ds:'Чисто экономически',who:'cfo',d:{rev:4,cos:8,rep:-8,shr:4,cash:-8}},
+      {id:'C',dt:'Поднять зарплаты, сохранить людей',ds:'Лояльность, но маржа падает',who:'cmo',d:{rev:0,cos:-5,rep:7,shr:1,cash:-5}}]},
+'mc5e':{type:'opportunity',ttl:'Экспорт в СНГ: Казахстан и Узбекистан',body:'Российское производство конкурентоспособно в СНГ. Казахстан ищет поставщиков.',ctx:'<strong>Экспорт:</strong> Ростсельмаш экспортирует в 30+ стран. Ваша очередь?',src:'Стратегия Ростсельмаш и КАМАЗ на рынках СНГ',adv:{cfo:'Экспорт — диверсификация выручки.',cmo:'Российский бренд в СНГ позитивен.',ceo:'Нужен местный партнёр.'},
+decs:[{id:'A',dt:'Офисы в Казахстане и Узбекистане',ds:'Прямые продажи, максимальная маржа',who:'cmo',d:{rev:10,cos:-5,rep:8,shr:7,cash:-5}},
+      {id:'B',dt:'Работать через дистрибьюторов',ds:'Меньше вложений, меньше контроля',who:'cfo',d:{rev:6,cos:-2,rep:5,shr:4,cash:-2}},
+      {id:'C',dt:'Пилот в одной стране',ds:'Осторожный старт',who:'ceo',d:{rev:3,cos:-1,rep:3,shr:2,cash:-1}}]},
+fn1:{type:'risk',ttl:'ЦБ требует расширенный пакет для лицензии',body:'Регулятор запросил документы. 30 дней. Без лицензии — нельзя масштабироваться.',ctx:'<strong>Реальность fintech:</strong> ЦБ выдаёт лицензии строго, отзывает быстро.',src:'Типичный процесс лицензирования fintech',adv:{cfo:'Нанять лучших юристов — не экономить.',cto:'Автоматизируем compliance-процессы.',ceo:'Налаживаем отношения с регулятором напрямую.'},
+decs:[{id:'A',dt:'Топовые compliance-юристы',ds:'Дорого, но надёжно',who:'cfo',d:{rev:0,cos:-4,rep:6,shr:0,cash:-4}},
+      {id:'B',dt:'Выстроить compliance внутри',ds:'Медленнее, но экспертиза остаётся',who:'cto',d:{rev:0,cos:-2,rep:4,shr:0,cash:-2}},
+      {id:'C',dt:'Партнёрство с банком-агентом',ds:'Без своей лицензии',who:'ceo',d:{rev:3,cos:-1,rep:2,shr:2,cash:2}}]},
+fn2:{type:'opportunity',ttl:'Первые 10 000 клиентов: как масштабировать?',body:'Unit economics сходятся. Выбор между каналами привлечения.',ctx:'<strong>Стратегия:</strong> Т-Банк строил через директ-мейл. Сбер — через зарплатные проекты.',src:'Опыт Т-Банка и необанков',adv:{cfo:'Зарплатные проекты — самый дешёвый CAC.',cmo:'Реферальная программа — вирусный рост.',cto:'API-интеграции с HR-платформами.'},
+decs:[{id:'A',dt:'Зарплатные проекты с работодателями',ds:'Оптом, дёшево, лояльно',who:'cfo',d:{rev:6,cos:-3,rep:5,shr:5,cash:-3}},
+      {id:'B',dt:'Реферальная программа + кешбэк',ds:'Вирусный рост, выше CAC',who:'cmo',d:{rev:5,cos:-4,rep:7,shr:4,cash:-4}},
+      {id:'C',dt:'B2B-фокус: малый бизнес',ds:'Выше ARPU, меньше конкуренция',who:'ceo',d:{rev:4,cos:-2,rep:4,shr:3,cash:-2}}]},
+fn3:{type:'opportunity',ttl:'Пилот цифрового рубля ЦБ',body:'ЦБ отбирает 30 банков. Участие = инфраструктура + PR. Доработка IT — 3 месяца.',ctx:'<strong>Цифровой рубль:</strong> Пилот запущен в 2023 г., к 2026 г. — массовое использование.',src:'Реальный пилот цифрового рубля ЦБ РФ',adv:{cfo:'Первые транзакции — первые данные.',cto:'3 месяца на доработку — реально.',cmo:'Репутация инноватора на 5 лет вперёд.'},
+decs:[{id:'A',dt:'Участвовать в пилоте первой волны',ds:'Репутация + инфраструктура',who:'cmo',d:{rev:3,cos:-4,rep:10,shr:3,cash:-4}},
+      {id:'B',dt:'Подождать второй волны',ds:'Учиться на чужих ошибках',who:'cfo',d:{rev:0,cos:0,rep:2,shr:0,cash:0}},
+      {id:'C',dt:'Отказаться — фокус на BNPL',ds:'Другой продукт',who:'cto',d:{rev:2,cos:-1,rep:-1,shr:1,cash:-1}}]},
+fn4:{type:'risk',ttl:'ЦБ: норматив Н1.0 нарушен',body:'30 дней на исправление. При повторном — ограничение лицензии.',ctx:'<strong>Регуляторный риск:</strong> Нормативы ЦБ давят на fintech, но защищают систему.',src:'Типичный сценарий для небольших банков',adv:{cfo:'Докапитализация — единственный путь.',cto:'Можно сократить кредитный портфель.',ceo:'Привлечь стратега — продать долю ради капитала.'},
+decs:[{id:'A',dt:'Срочная докапитализация',ds:'Быстро закрыть норматив',who:'cfo',d:{rev:0,cos:-5,rep:5,shr:0,cash:10}},
+      {id:'B',dt:'Продать часть кредитного портфеля',ds:'Снижение доходности',who:'cto',d:{rev:-4,cos:0,rep:-2,shr:-1,cash:5}},
+      {id:'C',dt:'Привлечь стратегического инвестора',ds:'Продать долю за капитал',who:'ceo',d:{rev:2,cos:-2,rep:3,shr:1,cash:15}}]},
+fn5:{type:'opportunity',ttl:'Трансформация в финансовую экосистему',body:'Данные клиентов позволяют запустить страховку, инвестиции, подписку.',ctx:'<strong>Финал:</strong> Сбер или Т-Банк — какой путь?',src:'Стратегии Сбер и Т-Банк',adv:{cfo:'Суперприложение дешевле экосистемы в 10 раз.',cmo:'Экосистема — данные на каждом шагу жизни.',ceo:'Нужно определиться с идентичностью.'},
+decs:[{id:'A',dt:'Финансовая экосистема',ds:'Страховки, инвестиции, маркетплейс',who:'cmo',d:{rev:8,cos:-10,rep:7,shr:7,cash:-10}},
+      {id:'B',dt:'Суперприложение банка',ds:'Лучший UX, только финансы',who:'cfo',d:{rev:9,cos:-4,rep:10,shr:5,cash:-4}},
+      {id:'C',dt:'B2B-финансы для малого бизнеса',ds:'Нишевая стратегия',who:'ceo',d:{rev:6,cos:-3,rep:6,shr:4,cash:-2}}]},
+gn1:{type:'risk',ttl:'Кибератака: данные 50 000 клиентов утекли',body:'Атака на инфраструктуру. РКН требует уведомления.',ctx:'<strong>Угроза:</strong> Атаки на российский бизнес выросли в 4× за 2023–2024 гг.',src:'По аналогии с утечками Яндекс.Еда, СДЭК, МТС Банка',adv:{cfo:'Расходы на PR и юристов — неизбежны.',cmo:'Час прозрачности = месяцы восстановления.',cto:'Инцидент-ответ в течение 2 часов.'},
+decs:[{id:'A',dt:'Публичное заявление + компенсация',ds:'Прозрачность сохраняет доверие',who:'cmo',d:{rev:-2,cos:-4,rep:-3,shr:-1,cash:-4}},
+      {id:'B',dt:'Тихое уведомление РКН',ds:'Риск огласки',who:'cfo',d:{rev:-1,cos:-2,rep:-10,shr:-2,cash:-2}},
+      {id:'C',dt:'PR-кризисная команда',ds:'Управлять нарративом',who:'cmo',d:{rev:-1,cos:-3,rep:-2,shr:0,cash:-3}}]},
+gn2:{type:'market',ttl:'Рубль упал на 15% за месяц',body:'Курс с 88 до 103 ₽. Импортные составляющие подорожали.',ctx:'<strong>Макровызов:</strong> Волатильность рубля — постоянный фон российского бизнеса.',src:'По аналогии с волатильностью рубля 2023–2024 гг.',adv:{cfo:'Хеджируем. 1.5% от оборота — разумно.',cmo:'Клиенты понимают инфляцию. Объясняем.',ceo:'Поднимаем цены поэтапно.'},
+decs:[{id:'A',dt:'Поднять цены на 12%',ds:'Сохранить маржу',who:'cfo',d:{rev:3,cos:0,rep:-3,shr:-2,cash:3}},
+      {id:'B',dt:'Зафиксировать цены',ds:'Лояльность за счёт прибыли',who:'cmo',d:{rev:-2,cos:0,rep:5,shr:2,cash:-2}},
+      {id:'C',dt:'Хеджировать через банк',ds:'1.5% от оборота как страховка',who:'cfo',d:{rev:0,cos:-2,rep:2,shr:0,cash:-2}}]},
+gn3:{type:'opportunity',ttl:'ESG-сертификат открывает контракт на 80 млн ₽',body:'Крупный ретейлер ищет поставщиков с ESG-рейтингом. Сертификат — 3 мес. и 2 млн ₽.',ctx:'<strong>Тренд:</strong> ESG-требования в цепочках поставок корпораций к 2024 г.',src:'Реальный тренд: ESG в цепочках поставок',adv:{cfo:'2 млн для 80 млн — очевидно.',cmo:'ESG — это не только деньги, это бренд.',cto:'Начнём с измерения углеродного следа.'},
+decs:[{id:'A',dt:'Сертифицироваться и войти в цепочку',ds:'Понятная окупаемость',who:'cfo',d:{rev:8,cos:-2,rep:7,shr:4,cash:-2}},
+      {id:'B',dt:'ESG-практики без сертификата',ds:'Подготовиться, подать заявку через год',who:'ceo',d:{rev:1,cos:-1,rep:4,shr:1,cash:-1}},
+      {id:'C',dt:'Игнорировать',ds:'Сосредоточиться на операционке',who:'cto',d:{rev:0,cos:0,rep:-2,shr:0,cash:0}}]}
+};
+var DILS={
+tdil:{ttl:'Дилемма: экосистема или фокус?',ctx:'Яндекс строил экосистему 15 лет. Контур сфокусировался на одном — стал лидером ниши. Инвесторы давят на масштаб.',a:{ico:'🌐',n:'Экосистема',d:'CRM + ERP + HR + аналитика.',delta:{rev:5,cos:-8,rep:4,shr:6,cash:-8}},b:{ico:'🎯',n:'Фокус на нише',d:'Лучшие в одном. Как Контур.',delta:{rev:4,cos:-2,rep:7,shr:3,cash:-2}}},
+rdil:{ttl:'Дилемма: маркетплейс или свой канал?',ctx:'WB — маржа 10–15%. Свой канал — маржа 30–40%, но 2 года до окупаемости. ВсеИнструменты выбрали свой путь и выиграли.',a:{ico:'📦',n:'Маркетплейсы',d:'100 млн покупателей. Комиссия 38%.',delta:{rev:8,cos:-5,rep:0,shr:8,cash:4}},b:{ico:'🏪',n:'Собственный канал',d:'Данные и маржа — ваши.',delta:{rev:3,cos:-5,rep:6,shr:2,cash:-3}}},
+fdil:{ttl:'Дилемма: франшиза или органический рост?',ctx:'Dodo Pizza — 900 точек за 14 лет через франшизу. Теремок — 300 точек за 25 лет без неё. Оба живы.',a:{ico:'⚡',n:'Франшиза',d:'50 точек за 2 года. Чужой капитал, риск качества.',delta:{rev:9,cos:-6,rep:-4,shr:10,cash:5}},b:{ico:'💎',n:'Органический рост',d:'7–10 точек. Полный контроль.',delta:{rev:4,cos:-3,rep:8,shr:3,cash:-3}}},
+mdil:{ttl:'Дилемма: роботизация или люди?',ctx:'КАМАЗ автоматизировал линии, уволил 3000 рабочих — скандал с профсоюзами, но конкурентоспособность выросла.',a:{ico:'🤖',n:'Роботизация',d:'30 млн ₽, окупается за 3 года. −30% персонала.',delta:{rev:2,cos:5,rep:-6,shr:4,cash:-10}},b:{ico:'👷',n:'Люди + переобучение',d:'Программа с колледжами. Лояльность команды.',delta:{rev:0,cos:-3,rep:8,shr:1,cash:-3}}},
+fndil:{ttl:'Дилемма: экосистема или суперприложение?',ctx:'Сбер потратил 500+ млрд на экосистему — часть убыточна. Т-Банк остался банком с лучшим UX. Оба модели рабочие.',a:{ico:'🌐',n:'Финансовая экосистема',d:'Страховка + инвестиции + маркетплейс.',delta:{rev:4,cos:-10,rep:5,shr:5,cash:-10}},b:{ico:'📱',n:'Суперприложение',d:'Лучший UX. Только финансы.',delta:{rev:6,cos:-4,rep:9,shr:3,cash:-4}}}
+};
+var SYNS={
+ts1:{n:'Реестр ПО + госзаказ',d:'Аккредитация → приоритет в госзакупках',fx:'+15% к выручке',req:'rep>70'},
+ts2:{n:'IT-льготы + кадры',d:'Налог 0% → конкурентный оффер',fx:'-20% к ФОТ',req:'q4'},
+rs1:{n:'Лояльность + данные',d:'Программа лояльности = персонализация',fx:'+10% к доле рынка',req:'rev>25'},
+rs2:{n:'Омниканал',d:'Свой канал + WB = охват',fx:'-10% к стоимости привлечения',req:'dil'},
+fs1:{n:'Приложение + доставка',d:'Лояльность + dark kitchen',fx:'+8% к марже',req:'rep>65'},
+fs2:{n:'Кухня-призрак + бренд',d:'Dark kitchen под отдельным брендом',fx:'+25% к выручке',req:'q3'},
+ms1:{n:'СПИК + ФРП',d:'Контракт + льготный займ',fx:'-15% к ставке кредитов',req:'dil'},
+ms2:{n:'Роботизация + экспорт',d:'Автоматизация = конкурентные цены в СНГ',fx:'+20% к доле СНГ',req:'dil'},
+fns1:{n:'СБП + кешбэк',d:'Экономия 1.2% комиссии',fx:'+5% к марже транзакций',req:'q2'},
+fns2:{n:'Цифровой рубль + B2B',d:'Первые = корпоративные клиенты',fx:'+3 п.п. к доле B2B',req:'dil'}
+};
+var STRATS={
+innovation:{name:'Инноватор',company:'Ваш путь похож на Positive Technologies или Астра Групп',desc:'Ставка на технологии, новые продукты, вход на новые рынки первым. Высокие риски — высокая отдача.',check:function(d){var n=0;for(var i=0;i<d.length;i++)if(d[i].who==='cto')n++;return n>=2;}},
+gos:{name:'Государственник',company:'Ваш путь похож на Ростех или КАМАЗ',desc:'Госконтракты, СПИК, поддержка регуляторов. Меньше рисков, предсказуемый рост.',check:function(d){var n=0;for(var i=0;i<d.length;i++)if(d[i].who==='cfo')n++;return n>=3;}},
+brand:{name:'Строитель бренда',company:'Ваш путь похож на Dodo Pizza или ВкусВилл',desc:'Инвестиции в репутацию, лояльность, качество. Долго, зато устойчиво.',check:function(d){var n=0;for(var i=0;i<d.length;i++)if(d[i].who==='cmo')n++;return n>=3;}},
+ecosystem:{name:'Экосистемщик',company:'Ваш путь похож на Яндекс или Сбер',desc:'Синергии, смежные рынки, долгосрочное доминирование.',check:function(){return G.synUnlocked.length>=2;}},
+pragmatic:{name:'Прагматик',company:'Ваш путь похож на Fix Price или Контур',desc:'Взвешенные решения, без лишнего риска. Стабильный рост.',check:function(){return true;}}
+};
+var GLOSS=[
+{t:'EBITDA',d:'Прибыль до вычета процентов, налогов и амортизации.',ex:'<strong>Яндекс, 2023:</strong> EBITDA 160 млрд ₽ при более низкой чистой прибыли — амортизация инвестиций в облако.'},
+{t:'Ключевая ставка ЦБ',d:'Минимальная ставка ЦБ. Определяет стоимость кредитов.',ex:'<strong>Октябрь 2024:</strong> ЦБ поднял до 21%. Ипотека под 25%+ — спрос рухнул.'},
+{t:'СПИК',d:'Специнвестконтракт. Налоговые льготы в обмен на локализацию.',ex:'<strong>КАМАЗ</strong> перезаключил СПИК после ухода западных партнёров.'},
+{t:'Импортозамещение',d:'Замена иностранных товаров отечественными аналогами.',ex:'<strong>Astra Linux</strong> — в нише Windows в госсекторе. Реестр ПО: 20 000+ продуктов.'},
+{t:'Unit Economics',d:'CAC (стоимость привлечения) vs LTV (пожизненная ценность клиента).',ex:'<strong>Т-Банк:</strong> LTV/CAC = 5:1 через прямой маркетинг без офисов.'}
+];
+
+// ============ STATE ============
+var G={diff:null,ind:null,q:0,totalQ:8,m:{rev:0,cos:0,rep:0,shr:0,cash:0,debt:0},score:0,decs:[],synUnlocked:[],dilChosen:null,chainStep:0,macroUsed:{},macroQueue:[],companyLevel:0,activeRegions:[],teacherMode:false,studentName:'',studentGroup:'',finOpen:false};
+
+// ============ HELPERS ============
+function go(id){var a=document.querySelectorAll('.scr');for(var i=0;i<a.length;i++)a[i].classList.remove('on');document.getElementById(id).classList.add('on');window.scrollTo(0,0);}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
+function shuffle(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=b[i];b[i]=b[j];b[j]=tmp;}return b;}
+function pickDiff(k,el){var c=document.querySelectorAll('.dc');for(var i=0;i<c.length;i++)c[i].classList.remove('sel-e','sel-m','sel-h');el.classList.add('sel-'+(k==='easy'?'e':k==='medium'?'m':'h'));G.diff=k;document.getElementById('btnD').disabled=false;}
+function humanReq(r){var m={'rep>70':'Репутация > 70','rep>65':'Репутация > 65','rev>25':'Выручка > 25 млн','q2':'Квартал 2+','q3':'Квартал 3+','q4':'Квартал 4+','dil':'Дилемма решена'};return m[r]||r;}
+function checkSyn(r){if(r==='rep>70')return G.m.rep>70;if(r==='rep>65')return G.m.rep>65;if(r==='rev>25')return G.m.rev>25;if(r==='q2')return G.q>=2;if(r==='q3')return G.q>=3;if(r==='q4')return G.q>=4;if(r==='dil')return G.dilChosen!==null;return false;}
+function tlabel(t){return t==='market'?'📊 Рыночная ситуация':t==='risk'?'⚠️ Риск':'✨ Возможность';}
+function buildInds(){var h='';for(var i=0;i<INDS.length;i++){var ind=INDS[i],th='';for(var j=0;j<ind.tags.length;j++)th+='<span class="tag '+ind.tags[j].c+'">'+ind.tags[j].t+'</span>';h+='<div class="ic" onclick="startGame(\''+ind.id+'\')"><div class="ic-ico">'+ind.ico+'</div><div class="ic-name">'+ind.name+'</div><div class="ic-desc">'+ind.desc+'</div><div class="tags">'+th+'</div></div>';}document.getElementById('indGrid').innerHTML=h;}
+function startTeacherMode(){G.teacherMode=true;G.studentName=document.getElementById('studentName').value.trim()||'Студент';G.studentGroup=document.getElementById('studentGroup').value.trim()||'';go('s1');}
+function startGame(iid){var ind=null;for(var i=0;i<INDS.length;i++)if(INDS[i].id===iid){ind=INDS[i];break;}var df=DIFF[G.diff];G.ind=ind;G.q=1;G.chainStep=0;G.m={rev:ind.sm.rev,cos:ind.sm.cos,rep:ind.sm.rep,shr:ind.sm.shr,cash:df.capital,debt:ind.sm.debt};G.score=0;G.decs=[];G.synUnlocked=[];G.dilChosen=null;G.companyLevel=0;G.activeRegions=[ind.regions[0]];G.macroUsed={};G.macroQueue=shuffle(MACROS).slice(0,df.crises);var hd=document.getElementById('hudD');hd.innerHTML='<span class="dbadge '+df.cls+'">'+df.lbl+'</span>';document.getElementById('mainHud').classList.add('show');document.getElementById('floatNav').style.display='flex';initCompetitor();G_SHOWN_NEWS=[];G_CRISIS_USED=[];G_HUMAN_USED=[];G_UNLOCKED_ACH=[];G_INVEST={rd:20,mkt:20,hr:20,exp:20,auto:20};go('s3');renderQ();}
+
+function renderQ(){
+  updateHUD();renderQBar();renderCompany();renderTicker();renderFin();
+  if(G.q<=2)renderCond();else document.getElementById('condBlock').innerHTML='';
+  // Maybe show invest panel at q1, q3, q5, q7
+  if(G.q%2===1 && G.q!==1){
+    var ipHtml = renderInvestPanel();
+    var existing = document.getElementById('gc').innerHTML;
+    // We'll show invest at start of odd quarters via a mini-screen
+    document.getElementById('gc').innerHTML = ipHtml +
+      '<div class="brow"><button class="btn" onclick="applyInvestEffects();renderQMain()">Подтвердить бюджет →</button></div>';
+    return;
+  }
+  renderQMain();
+}
+function renderQMain(){if(G.q===4&&!G.dilChosen){renderDil();return;}if(G.q===6){renderSyn();return;}
+var mf=null;for(var i=0;i<G.macroQueue.length;i++){var mc=G.macroQueue[i];if(!G.macroUsed[mc.id]){if((G.q===3&&i===0)||(G.q===5&&i===1)||(G.q===7&&i===2)){mf=mc;break;}}}
+if(mf){renderMacro(mf);return;}
+  // Rep crisis or human event (random, occasional)
+  if(maybeShowRepCrisis()) return;
+  if(maybeShowHumanEvent()) return;
+if(G.chainStep<G.ind.chain.evs.length){renderEv(G.ind.chain.evs[G.chainStep],true);}else{var idx=(G.chainStep-G.ind.chain.evs.length)%G.ind.extraEvs.length;renderEv(G.ind.extraEvs[idx],false);}
+}
+function renderEv(evId,isChain){var ev=EVS[evId];if(!ev){nextQ();return;}
+var chainHtml='';
+if(isChain){var steps=G.ind.chain.steps,sh='';for(var i=0;i<steps.length;i++){var sc=i<G.chainStep?'done':i===G.chainStep?'cur':'future',sl=i===G.chainStep?'active':'';sh+='<div class="cs-step"><div class="cs-dot '+sc+'">'+(i+1)+'</div><div class="cs-slbl '+sl+'">'+steps[i]+'</div></div>';}chainHtml='<div class="chain-header"><div class="chain-title">📖 '+G.ind.chain.name+'</div><div class="chain-steps">'+sh+'</div></div>';}
+var ctxH=ev.ctx?'<div class="ev-ctx">'+ev.ctx+'</div>':'';
+var advH='';if(ev.adv){advH='<div class="advisors-row">';var ak=['cfo','cto','cmo'];for(var a=0;a<ak.length;a++){var k=ak[a],ad=ADVISORS[k],op=ev.adv[k]||'';if(op){advH+='<div class="advisor"><div class="adv-header"><div class="adv-avatar" style="background:'+ad.bg+'">'+ad.ico+'</div><div><div class="adv-role">'+ad.role+'</div><div class="adv-name">'+ad.name+'</div></div></div><div class="adv-opinion">'+op+'</div></div>';}}advH+='</div>';}
+var dh='';for(var i=0;i<ev.decs.length;i++){var dc=ev.decs[i],ad2=ADVISORS[dc.who],ab=ad2?'<div class="db-adv '+dc.who+'">'+ad2.ico+' Рекомендует '+ad2.role+'</div>':'';dh+='<button class="db" id="db'+dc.id+'" onclick="chooseDec(\''+evId+'\',\''+dc.id+'\','+isChain+')"><span class="dl">'+dc.id+'</span><span><div class="dt">'+dc.dt+'</div><div class="ds">'+dc.ds+'</div>'+ab+'</span></button>';}
+document.getElementById('gc').innerHTML=chainHtml+'<div class="ev-card"><span class="ev-lbl">'+tlabel(ev.type)+'</span><div class="ev-qlbl">Кв. '+G.q+'/'+G.totalQ+'</div><div class="ev-ttl">'+ev.ttl+'</div>'+ctxH+'<div class="ev-body">'+ev.body+'</div><div class="ev-src">📎 '+ev.src+'</div></div>'+advH+'<div class="dec-ttl">Ваше решение</div><div class="dec-list">'+dh+'</div>';}
+
+function chooseDec(evId,decId,isChain){var ev=EVS[evId],dec=null;for(var i=0;i<ev.decs.length;i++)if(ev.decs[i].id===decId){dec=ev.decs[i];break;}var mul=DIFF[G.diff].mul,d=dec.d;var ar={rev:d.rev||0,cos:d.cos||0,rep:d.rep||0,shr:d.shr||0,cash:d.cash||0,who:dec.who};if(ar.rev<0)ar.rev=Math.round(ar.rev*mul);if(ar.cos<0)ar.cos=Math.round(ar.cos*mul);if(ar.cash<0)ar.cash=Math.round(ar.cash*mul);var dbs=document.querySelectorAll('.db');for(var i=0;i<dbs.length;i++)dbs[i].classList.remove('sel');var el=document.getElementById('db'+decId);if(el)el.classList.add('sel');
+G.m.rev=Math.max(0,G.m.rev+ar.rev);G.m.cos=Math.max(0,G.m.cos+ar.cos);G.m.rep=Math.max(0,Math.min(100,G.m.rep+ar.rep));G.m.shr=Math.max(0,Math.min(100,G.m.shr+ar.shr));G.m.cash=Math.max(0,G.m.cash+ar.cash);G.score+=ar.rep+ar.shr*2+(ar.rev>0?ar.rev:0);if(isChain)G.chainStep++;saveHistory();
+var nl=Math.min(3,Math.floor(G.q/2));if(nl>G.companyLevel){G.companyLevel=nl;if(G.ind.regions[G.companyLevel]&&G.activeRegions.indexOf(G.ind.regions[G.companyLevel])<0)G.activeRegions.push(G.ind.regions[G.companyLevel]);toast('🏢 Компания выросла до уровня '+(G.companyLevel+1)+'!');}
+G.decs.push({q:G.q,ev:ev.ttl,dec:dec.dt,d:ar,who:dec.who});maybeShowTip(dec.dt);showRes(dec,ar);}
+
+function showRes(dec,ar){var badges='',keys=['rev','cos','rep','shr','cash'],labs=['Выручка','Затраты','Репутация','Доля рынка','Кэш'],sfx=['млн ₽','млн ₽','бал.','п.п.','млн ₽'];for(var i=0;i<keys.length;i++){var v=ar[keys[i]];if(v&&v!==0)badges+='<span class="ib '+(v>0?'p':'n')+'">'+(v>0?'▲':'▼')+' '+Math.abs(v)+' '+sfx[i]+' '+labs[i]+'</span>';}
+var ad=dec.who?ADVISORS[dec.who]:null,an=ad?'<div style="font-size:10px;color:#7A7A8C;margin-top:5px">'+ad.ico+' Совет '+ad.role+' сработал</div>':'';var nl=G.q>=G.totalQ?'Завершить игру →':'Квартал '+(G.q+1)+' →';
+document.getElementById('gc').innerHTML='<div class="res-box"><div style="font-family:Unbounded,sans-serif;font-size:10px;color:#D4A017;margin-bottom:5px">✓ РЕШЕНИЕ ПРИНЯТО</div><div style="font-size:13px;font-weight:600;color:#E8E4DC;margin-bottom:3px">'+dec.dt+'</div><div style="font-size:11px;color:#7A7A8C;margin-bottom:7px">'+dec.ds+'</div>'+an+'<div class="res-impacts">'+(badges||'<span style="color:#7A7A8C;font-size:11px">Без немедленного эффекта</span>')+'</div></div><div class="brow"><button class="btn" onclick="nextQ()">'+nl+'</button></div>';updateHUD();renderFin();}
+
+function renderMacro(mc){G.macroUsed[mc.id]=true;var imp=mc.impact;if(imp.rev)G.m.rev=Math.max(0,G.m.rev+imp.rev);if(imp.cos)G.m.cos=Math.max(0,G.m.cos+imp.cos);if(imp.rep)G.m.rep=Math.max(0,Math.min(100,G.m.rep+imp.rep));if(imp.cash)G.m.cash=Math.max(0,G.m.cash+imp.cash);if(imp.debt)G.m.debt=G.m.debt+(imp.debt||0);
+var ib='',iks=['rev','cos','rep','cash','debt'],ils=['Выручка','Затраты','Репутация','Кэш','Долг'],is2=['млн ₽','млн ₽','бал.','млн ₽','млн ₽'];for(var i=0;i<iks.length;i++){var v=imp[iks[i]];if(v)ib+='<span class="mi-badge">'+(v>0?'+':'')+v+' '+is2[i]+' '+ils[i]+'</span>';}
+document.getElementById('gc').innerHTML='<div class="macro-card"><div class="macro-title">🚨 Макрокризис: '+mc.ttl+'</div><div class="macro-body">'+mc.body+'</div><div class="macro-impact">'+ib+'</div></div><div class="ev-card" style="border-color:#242430"><div class="ev-ttl" style="padding-right:0">Как реагируем?</div><div class="dec-list" style="margin-top:10px"><button class="db" onclick="rMacro(1)"><span class="dl">A</span><span><div class="dt">Агрессивная защита</div><div class="ds">Инвестировать в адаптацию — потери потом меньше</div></span></button><button class="db" onclick="rMacro(2)"><span class="dl">B</span><span><div class="dt">Консервативный режим</div><div class="ds">Заморозить расходы, сохранить кэш</div></span></button><button class="db" onclick="rMacro(3)"><span class="dl">C</span><span><div class="dt">Захватить рынок пока конкуренты паникуют</div><div class="ds">Рискованно, но потенциально выгодно</div></span></button></div></div>';updateHUD();renderFin();}
+function rMacro(o){var d=o===1?{rev:2,cos:-3,rep:4,cash:-3}:o===2?{rev:-2,cos:3,rep:1,cash:3}:{rev:4,cos:-2,rep:3,cash:-4};G.m.rev=Math.max(0,G.m.rev+d.rev);G.m.cos=Math.max(0,G.m.cos+d.cos);G.m.rep=Math.max(0,Math.min(100,G.m.rep+d.rep));G.m.cash=Math.max(0,G.m.cash+d.cash);G.score+=d.rep+2;var nl=G.q>=G.totalQ?'Завершить игру →':'Квартал '+(G.q+1)+' →';document.getElementById('gc').innerHTML='<div class="res-box"><div style="font-family:Unbounded,sans-serif;font-size:10px;color:#D4A017;margin-bottom:5px">✓ РЕАКЦИЯ НА КРИЗИС</div><div style="font-size:12px;color:#7A7A8C">Компания адаптировалась к изменившимся условиям</div></div><div class="brow"><button class="btn" onclick="nextQ()">'+nl+'</button></div>';updateHUD();renderFin();}
+
+function renderDil(){var dil=DILS[G.ind.dil];document.getElementById('gc').innerHTML='<div class="ev-card"><span class="ev-lbl">🎯 Стратегическая дилемма</span><div class="ev-qlbl">Кв. '+G.q+'/'+G.totalQ+'</div><div class="ev-ttl">'+dil.ttl+'</div><div class="ev-ctx">'+dil.ctx+'</div></div><div class="dil-vs"><div class="do" id="doA" onclick="chooseDil(\'a\')"><div class="do-ico">'+dil.a.ico+'</div><div class="do-name">'+dil.a.n+'</div><div class="do-desc">'+dil.a.d+'</div></div><div class="dil-or">ИЛИ</div><div class="do" id="doB" onclick="chooseDil(\'b\')"><div class="do-ico">'+dil.b.ico+'</div><div class="do-name">'+dil.b.n+'</div><div class="do-desc">'+dil.b.d+regionEffectHtml()+'</div></div></div>';}
+function chooseDil(o){var dil=DILS[G.ind.dil],ch=o==='a'?dil.a:dil.b,d=ch.delta;G.m.rev=Math.max(0,G.m.rev+(d.rev||0));G.m.cos=Math.max(0,G.m.cos+(d.cos||0));G.m.rep=Math.max(0,Math.min(100,G.m.rep+(d.rep||0)));G.m.shr=Math.max(0,Math.min(100,G.m.shr+(d.shr||0)));G.m.cash=Math.max(0,G.m.cash+(d.cash||0));G.score+=(d.rep||0)+(d.shr||0)*2;G.dilChosen=o;var el=document.getElementById('do'+(o==='a'?'A':'B'));if(el)el.classList.add('ch');setTimeout(function(){document.getElementById('gc').innerHTML='<div class="res-box"><div style="font-family:Unbounded,sans-serif;font-size:10px;color:#D4A017;margin-bottom:5px">✓ СТРАТЕГИЯ ВЫБРАНА</div><div style="font-size:13px;font-weight:600;color:#E8E4DC;margin-bottom:3px">'+ch.n+'</div><div style="font-size:11px;color:#7A7A8C">Этот выбор влияет на бизнес-модель до конца игры</div></div><div class="brow"><button class="btn" onclick="nextQ()">Квартал '+(G.q+1)+' →</button></div>';updateHUD();renderFin();},400);}
+
+function renderSyn(){var sids=G.ind.syns,ch='';for(var i=0;i<sids.length;i++){var s=SYNS[sids[i]],ul=checkSyn(s.req);ch+='<div class="sc '+(ul?'ul':'lk')+'"><div class="sc-name">'+(ul?'✅ ':'🔒 ')+s.n+'</div><div class="sc-desc">'+s.d+'</div><div class="sc-fx">'+s.fx+'</div><div class="sc-req">Условие: '+humanReq(s.req)+'</div></div>';}document.getElementById('gc').innerHTML='<div class="ev-card"><span class="ev-lbl">⚡ Синергии</span><div class="ev-qlbl">Кв. '+G.q+'/'+G.totalQ+'</div><div class="ev-ttl">Эффекты ваших решений</div><div class="ev-body">Правильное сочетание решений создаёт мультипликативный эффект — как у Яндекса, Сбера или Dodo Pizza.</div></div><div class="syn-grid">'+ch+'</div><div class="brow"><button class="btn" onclick="applySyn()">Применить и продолжить →</button></div>';}
+function applySyn(){var sids=G.ind.syns;for(var i=0;i<sids.length;i++){var s=SYNS[sids[i]];if(checkSyn(s.req)){var already=false;for(var j=0;j<G.synUnlocked.length;j++)if(G.synUnlocked[j]===sids[i]){already=true;break;}if(!already){G.synUnlocked.push(sids[i]);G.m.rev=Math.round(G.m.rev*1.07);G.m.rep=Math.min(100,G.m.rep+3);G.m.cash=Math.round(G.m.cash*1.04);G.score+=15;toast('⚡ Синергия «'+s.n+'» активирована!');}}}nextQ();}
+function nextQ(){
+  if(G.q>=G.totalQ){showFinal();return;}
+  G.q++;
+  applyRegionBonus();
+  updateCompetitor();
+  checkAchievements();
+  // Show news screen every other quarter (2,4,6,8) — but not on dilemma/synergy quarters
+  if(G.q%2===0 && G.q!==4 && G.q!==6){
+    var nextQ2 = G.q;
+    showNewsScreen(nextQ2, function(){ renderQ(); });
+  } else {
+    renderQ();
+  }
+}
+function updateHUD(){document.getElementById('hudQ').textContent=G.q+'/'+G.totalQ;var r=G.m.rev,hr=document.getElementById('hudR');hr.textContent=r+' млн ₽';hr.className=r>15?'g':r>5?'w':'b';var rep=G.m.rep,hrep=document.getElementById('hudRep');hrep.textContent=rep+'/100';hrep.className=rep>65?'g':rep>40?'w':'b';}
+function renderQBar(){var h='';for(var i=0;i<G.totalQ;i++){var c=i+1<G.q?'done':i+1===G.q?'cur':'';h+='<div class="qi '+c+'"></div>';}document.getElementById('qbar').innerHTML=h;}
+function renderCond(){var c=G.ind.conds,h='';for(var i=0;i<c.length;i++)h+='<div class="ci"><span class="ci-ico">'+c[i].ico+'</span><span>'+c[i].t+'</span></div>';document.getElementById('condBlock').innerHTML='<div class="cond-block"><div class="cond-ttl">Условия: '+G.ind.name+'</div>'+h+'</div>';}
+function renderCompany(){var ind=G.ind,lvl=G.companyLevel,sn=['Гараж / Стартап','Малый бизнес','Средний бизнес','Крупная компания'][lvl],bld=ind.bld[lvl],cnt=ind.staff[lvl][0],sh='';for(var i=0;i<cnt;i++)sh+='<span class="staff-person">👤</span>';var rh='';for(var i=0;i<ind.regions.length;i++){var isA=G.activeRegions.indexOf(ind.regions[i])>=0,isFresh=isA&&G.activeRegions[G.activeRegions.length-1]===ind.regions[i]&&G.q>1;rh+='<span class="region-dot'+(isA?' active':'')+(isFresh?' fresh':'')+'">'+ind.regions[i]+'</span>';}
+document.getElementById('companyStage').innerHTML='<div class="company-stage"><div class="cs-header"><div class="cs-name">'+ind.ico+' '+ind.name+'</div><div class="cs-stage-badge">'+sn+'</div></div><div class="building-wrap"><div style="text-align:center"><div style="font-size:'+(36+lvl*8)+'px;transition:font-size 0.5s;margin-bottom:4px">'+bld+'</div><div style="font-size:9px;color:#7A7A8C">Объект</div></div><div style="flex:1;padding-left:12px"><div style="font-size:9px;color:#7A7A8C;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Команда ('+cnt+' чел.)</div><div class="staff-row">'+sh+'</div></div></div><div><div class="regions-label">Регионы присутствия</div><div class="regions-map">'+rh+'</div></div></div>';}
+function renderTicker(){var el=document.getElementById('macroTicker');if(G.diff==='easy'){el.innerHTML='';return;}var msgs=['📊 ЦБ РФ: ключевая ставка '+(G.diff==='hard'?'21%':'16%'),'💱 Курс USD/RUB: '+(G.diff==='hard'?'105':'91')+' ₽','⚡ Дефицит IT-кадров: +38% к зарплатам за 2 года','📦 Wildberries: комиссия выросла до 38%','🔧 ФРП: льготные займы под 3% для производителей'];var msg=msgs[G.q%msgs.length];el.innerHTML='<div class="macro-ticker"><span>📡</span><span style="flex:1">'+msg+'</span><span class="mt-badge">Кв. '+G.q+'</span></div>';}
+function renderFin(){var m=G.m,profit=m.rev-m.cos,margin=m.rev>0?Math.round(profit/m.rev*100):0;var items=[{l:'Выручка',v:m.rev+' млн ₽',c:m.rev>15?'up':m.rev>5?'ne':'dn',s:'квартальная'},{l:'EBITDA',v:profit+' млн ₽',c:profit>0?'up':profit>-5?'ne':'dn',s:'маржа '+margin+'%'},{l:'Кэш',v:m.cash+' млн ₽',c:m.cash>10?'up':m.cash>3?'ne':'dn',s:'на счету'},{l:'Репутация',v:m.rep+'/100',c:m.rep>65?'up':m.rep>40?'ne':'dn',s:'рейтинг'},{l:'Доля рынка',v:m.shr+'%',c:m.shr>10?'up':m.shr>4?'ne':'dn',s:'отрасль'},{l:'Долг',v:m.debt+' млн ₽',c:m.debt<10?'up':m.debt<25?'ne':'dn',s:'обязательства'}];var gh='';for(var i=0;i<items.length;i++)gh+='<div class="fmc"><div class="fmc-l">'+items[i].l+'</div><div class="fmc-v '+items[i].c+'">'+items[i].v+'</div><div class="fmc-sub">'+items[i].s+'</div></div>';
+var dr=[{l:'Выручка',v:'+'+m.rev+' млн ₽'},{l:'— Себестоимость',v:'−'+m.cos+' млн ₽'},{l:'Валовая прибыль',v:(m.rev-m.cos)+' млн ₽'},{l:'EBITDA',v:profit+' млн ₽'},{l:'Кэш',v:m.cash+' млн ₽'},{l:'Долг',v:m.debt+' млн ₽'},{l:'Рентабельность',v:margin+'%'}];var dh='';for(var i=0;i<dr.length;i++)dh+='<div class="fin-row"'+(i===3||i===6?' style="font-weight:700"':'')+"><span>"+dr[i].l+"</span><span>"+dr[i].v+"</span></div>";
+document.getElementById('finPanel').innerHTML='<div class="fin-panel"><div class="fin-title">Финансовая модель <span class="fin-toggle" onclick="G.finOpen=!G.finOpen;renderFin()">'+(G.finOpen?'Свернуть △':'Подробнее ▽')+'</span></div><div class="fin-grid">'+gh+'</div><div class="fin-detail'+(G.finOpen?' show':'')+'">'+dh+'</div></div>';}
+
+function showFinal(){var m=G.m,profit=m.rev-m.cos,ts=Math.max(0,Math.round(G.score+profit*2+m.rep/2+m.shr+m.cash/5)),pct=Math.min(100,Math.round(ts/300*100));var grade,gc2,gm;if(pct>=80){grade='A';gc2='#2ECC71';gm='Топ-менеджер уровня Грефа или Тинькова. Бизнес устойчив.';}else if(pct>=60){grade='B';gc2='#D4A017';gm='Хороший результат. Справились с большинством вызовов.';}else if(pct>=40){grade='C';gc2='#F39C12';gm='Бизнес выжил, но с потерями. Пересмотрите стратегию.';}else{grade='D';gc2='#E74C3C';gm='Компания на грани. Попробуйте другую отрасль.';}
+var sk='pragmatic',skeys=['innovation','gos','brand','ecosystem'];for(var i=0;i<skeys.length;i++)if(STRATS[skeys[i]].check(G.decs)){sk=skeys[i];break;}var st=STRATS[sk];
+var bars=[{l:'Выручка',v:Math.min(100,m.rev*2)},{l:'Репутация',v:m.rep},{l:'Доля рынка',v:Math.min(100,m.shr*4)},{l:'Кэш',v:Math.min(100,m.cash/5*100)},{l:'Рентабельность',v:Math.min(100,Math.max(0,profit/Math.max(1,m.rev)*100))}];var bh='';for(var i=0;i<bars.length;i++){var bc=bars[i].v>70?'hi':bars[i].v>40?'mi':'';bh+='<div class="sbar-w"><div class="sbar-lbl"><span>'+bars[i].l+'</span><span>'+Math.round(bars[i].v)+'%</span></div><div class="sbar"><div class="sbar-f '+bc+'" style="width:'+bars[i].v+'%"></div></div></div>';}
+document.getElementById('finalC').innerHTML='<div class="ttl">Итоги: <span>'+G.ind.name+'</span></div><p class="sub">8 кварталов завершены. Вот что получилось.</p><div class="ring-wrap"><div class="ring" style="border-color:'+gc2+'"><div class="ring-g" style="color:'+gc2+'">'+grade+'</div><div class="ring-pct">'+pct+'%</div></div><div class="ring-msg">'+gm+'</div></div><div style="background:#141418;border:2px solid #D4A017;border-radius:14px;padding:18px;margin-bottom:16px;text-align:center"><div style="font-size:10px;color:#7A7A8C;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">Ваша стратегия</div><div style="font-family:Unbounded,sans-serif;font-size:18px;font-weight:900;color:#D4A017;margin-bottom:5px">'+st.name+'</div><div style="font-size:12px;color:#E8E4DC;margin-bottom:5px">'+st.company+'</div><div style="font-size:11px;color:#7A7A8C;line-height:1.6">'+st.desc+'</div></div><div class="sum-grid"><div class="sum-c"><div class="sum-big" style="color:'+(profit>=0?'#2ECC71':'#E74C3C')+'">'+(profit>=0?'+':'')+profit+' млн</div><div class="sum-lbl">Прибыль за игру</div></div><div class="sum-c"><div class="sum-big">'+m.rep+'</div><div class="sum-lbl">Финальная репутация</div></div><div class="sum-c"><div class="sum-big">'+m.cash+' млн</div><div class="sum-lbl">Кэш на счету</div></div><div class="sum-c"><div class="sum-big">'+G.synUnlocked.length+'</div><div class="sum-lbl">Синергий</div></div></div>'+bh+buildBenchmarkHtml()+'<div class="brow" style="margin-top:18px"><button class="btn" onclick="showDeb()">Дебрифинг →</button>'+(G.teacherMode?'<button class="btn-g" onclick="showReport()">Отчёт преподавателя</button>':'')+' <button class="btn-o" onclick="restartGame()">Сыграть снова</button></div>';go('s4');}
+
+function showDeb(){var ind=G.ind,coh='';for(var i=0;i<ind.dbc.length;i++){var c=ind.dbc[i];coh+='<div class="co-row"><div class="co-ico">'+c.ico+'</div><div><div class="co-name">'+c.n+'</div><div class="co-desc">'+c.d+'</div></div></div>';}var dh='';for(var i=0;i<G.decs.length;i++){var dc=G.decs[i],ad=ADVISORS[dc.who]||{ico:'',role:''};dh+='<div style="border-left:3px solid #C8102E;padding:7px 11px;margin-bottom:6px;background:#141418;border-radius:0 8px 8px 0"><div style="font-size:9px;color:#7A7A8C;margin-bottom:2px">Кв.'+dc.q+' · '+ad.ico+' '+ad.role+' · '+dc.ev+'</div><div style="font-size:12px;font-weight:600;color:#E8E4DC">'+dc.dec+'</div></div>';}var gh='';for(var i=0;i<GLOSS.length;i++){var g=GLOSS[i];gh+='<div class="gl-item"><div class="gl-term">'+g.t+'</div><div class="gl-def">'+g.d+'</div><div class="gl-ex">'+g.ex+'</div></div>';}
+document.getElementById('debC').innerHTML='<div class="ttl">Дебрифинг: <span>разбор</span></div><p class="sub">Сравнение с реальными компаниями и анализ решений</p><div class="card"><div class="card-ttl">🏢 Реальные компании вашей отрасли</div>'+coh+'</div><div class="shdr"><div class="shdr-l"></div><div class="shdr-t">Ваши решения по кварталам</div><div class="shdr-l"></div></div><div style="margin-bottom:18px">'+dh+'</div><div class="shdr"><div class="shdr-l"></div><div class="shdr-t">Глоссарий с российскими примерами</div><div class="shdr-l"></div></div><div style="margin-bottom:22px">'+gh+'</div><div class="brow">'+(G.teacherMode?'<button class="btn" onclick="showReport()">Отчёт преподавателя →</button>':'')+'<button class="btn-o" onclick="restartGame()">Начать заново</button></div>';go('s5');}
+
+function showReport(){var m=G.m,profit=m.rev-m.cos,ts=Math.max(0,Math.round(G.score+profit*2+m.rep/2+m.shr+m.cash/5)),pct=Math.min(100,Math.round(ts/300*100));var ac={cfo:0,cto:0,cmo:0};for(var i=0;i<G.decs.length;i++)if(G.decs[i].who&&ac[G.decs[i].who]!==undefined)ac[G.decs[i].who]++;var sk='pragmatic',skeys=['innovation','gos','brand','ecosystem'];for(var i=0;i<skeys.length;i++)if(STRATS[skeys[i]].check(G.decs)){sk=skeys[i];break;}var st=STRATS[sk];var drh='';for(var i=0;i<G.decs.length;i++){var dc=G.decs[i],q=dc.d.rep>0&&dc.d.cash>-3?'g':dc.d.rep<-5||dc.d.cash<-6?'b':'w',ql=q==='g'?'Сильное':q==='b'?'Слабое':'Нейтральное';drh+='<div class="tr-row"><span>Кв.'+dc.q+': '+dc.dec+'</span><span class="tr-tag '+q+'">'+ql+'</span></div>';}var ins=pct>=70?'<div class="tr-insight">✅ <strong>Сильный результат.</strong> Студент демонстрирует понимание долгосрочной стратегии. Рекомендуется к обсуждению решений в классе.</div>':pct>=45?'<div class="tr-insight">⚠️ <strong>Средний результат.</strong> Есть понимание механик, но ряд решений привёл к значимым потерям. Разберите проблемные кварталы.</div>':'<div class="tr-insight">🔴 <strong>Требует внимания.</strong> Студент принимал рискованные решения без учёта последствий. Рекомендуется повторное прохождение.</div>';
+document.getElementById('reportC').innerHTML='<div class="ttl">Отчёт <span>преподавателя</span></div><p class="sub">Автоматически сформированный анализ игровой сессии</p><div class="card"><div class="card-ttl">Студент</div><div class="tr-row"><span>Имя</span><span style="font-weight:600">'+G.studentName+'</span></div><div class="tr-row"><span>Группа</span><span>'+G.studentGroup+'</span></div><div class="tr-row"><span>Отрасль</span><span>'+G.ind.name+'</span></div><div class="tr-row"><span>Сложность</span><span>'+DIFF[G.diff].lbl+'</span></div><div class="tr-row"><span>Итоговый балл</span><span style="font-family:Unbounded,sans-serif;font-size:14px;color:#D4A017">'+pct+'/100</span></div></div><div class="card"><div class="card-ttl">Стратегический профиль</div><div style="font-size:14px;font-weight:700;color:#D4A017;margin-bottom:5px">'+st.name+'</div><div style="font-size:12px;color:#7A7A8C;margin-bottom:8px">'+st.company+'</div><div style="font-size:12px;line-height:1.6;color:#E8E4DC;margin-bottom:12px">'+st.desc+'</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px"><div style="text-align:center;background:#1C1C22;border-radius:8px;padding:8px"><div style="font-family:Unbounded,sans-serif;font-size:16px;color:#3498DB">'+ac.cfo+'</div><div style="font-size:9px;color:#7A7A8C">CFO</div></div><div style="text-align:center;background:#1C1C22;border-radius:8px;padding:8px"><div style="font-family:Unbounded,sans-serif;font-size:16px;color:#2ECC71">'+ac.cto+'</div><div style="font-size:9px;color:#7A7A8C">CTO</div></div><div style="text-align:center;background:#1C1C22;border-radius:8px;padding:8px"><div style="font-family:Unbounded,sans-serif;font-size:16px;color:#9B59B6">'+ac.cmo+'</div><div style="font-size:9px;color:#7A7A8C">CMO</div></div><div style="text-align:center;background:#1C1C22;border-radius:8px;padding:8px"><div style="font-family:Unbounded,sans-serif;font-size:16px;color:#D4A017">'+G.synUnlocked.length+'</div><div style="font-size:9px;color:#7A7A8C">Синергий</div></div></div></div><div class="card"><div class="card-ttl">Решения по кварталам</div>'+drh+'</div><div class="card"><div class="card-ttl">Финансовые результаты</div><div class="tr-row"><span>Выручка</span><span>'+m.rev+' млн ₽</span></div><div class="tr-row"><span>Прибыль/убыток</span><span style="color:'+(profit>=0?'#2ECC71':'#E74C3C')+'">'+(profit>=0?'+':'')+profit+' млн ₽</span></div><div class="tr-row"><span>Кэш</span><span>'+m.cash+' млн ₽</span></div><div class="tr-row"><span>Долг</span><span>'+m.debt+' млн ₽</span></div><div class="tr-row"><span>Репутация</span><span>'+m.rep+'/100</span></div><div class="tr-row"><span>Доля рынка</span><span>'+m.shr+'%</span></div></div>'+ins+'<div class="brow" style="margin-top:14px"><button class="btn-o" onclick="restartGame()">Начать заново</button></div>';go('sReport');}
+
+function restartGame(){G={diff:null,ind:null,q:0,totalQ:8,m:{rev:0,cos:0,rep:0,shr:0,cash:0,debt:0},score:0,decs:[],synUnlocked:[],dilChosen:null,chainStep:0,macroUsed:{},macroQueue:[],companyLevel:0,activeRegions:[],teacherMode:false,studentName:'',studentGroup:'',finOpen:false};document.getElementById('mainHud').classList.remove('show');document.getElementById('floatNav').style.display='none';G_HISTORY=[];G_SHOWN_NEWS=[];G_CRISIS_USED=[];G_HUMAN_USED=[];G_UNLOCKED_ACH=[];G.comp=null;G_CUR_REP_CRISIS=null;G_CUR_HUMAN_EVENT=null;G_NEWS_CALLBACK=null;var c=document.querySelectorAll('.dc');for(var i=0;i<c.length;i++)c[i].classList.remove('sel-e','sel-m','sel-h');document.getElementById('btnD').disabled=true;go('s0');}
+
+// ============ TERMS & FACTS DATA ============
+var TERMS_FACTS = [
+  {tag:'Термин',term:'EBITDA',body:'Прибыль до вычета процентов, налогов, износа и амортизации. Показывает, сколько компания зарабатывает от основной деятельности, без учёта структуры капитала.',fact:'Яндекс в 2023 году отчитался об EBITDA 160 млрд ₽, при этом чистая прибыль была значительно ниже — из-за амортизации инвестиций в облачную инфраструктуру.'},
+  {tag:'Термин',term:'Ключевая ставка ЦБ',body:'Минимальная ставка, по которой Центральный банк кредитует коммерческие банки. Определяет стоимость денег в экономике: чем выше ставка — тем дороже кредиты.',fact:'В октябре 2024 г. ЦБ поднял ставку до 21% — исторический рекорд. Ипотека под 25%+ фактически остановила рынок недвижимости.'},
+  {tag:'Термин',term:'СПИК 2.0',body:'Специальный инвестиционный контракт. Государство гарантирует льготы (нулевой налог на прибыль, субсидии), а компания обязуется локализовать производство на территории РФ.',fact:'КАМАЗ и Ростсельмаш работали по СПИК с иностранными партнёрами. После 2022 г. переоформили контракты с новыми условиями и сохранили льготы.'},
+  {tag:'Термин',term:'Unit Economics',body:'Экономика одной единицы: CAC (стоимость привлечения клиента) против LTV (пожизненная ценность клиента). Бизнес жизнеспособен, если LTV > CAC × 3.',fact:'Т-Банк добился LTV/CAC = 5:1 за счёт прямого маркетинга без офисов. Это позволило масштабировать бизнес без пропорционального роста расходов.'},
+  {tag:'Термин',term:'Доля рынка',body:'Процент от общего объёма рынка, который занимает ваша компания. Рост доли — признак опережения конкурентов даже при падении рынка.',fact:'WB и Ozon вместе занимают ~70% российского онлайн-ретейла. Остальные 30% делят более 500 игроков. Монополизация идёт быстро.'},
+  {tag:'Термин',term:'Параллельный импорт',body:'Ввоз товаров без согласия правообладателя через третьи страны (Казахстан, ОАЭ, Армения). Легализован в России с 2022 г. для 50+ товарных групп.',fact:'Через Казахстан в Россию в 2022–2023 гг. ввезли товаров на 5 трлн ₽. Цена параллельного импорта — +20–40% к обычной закупочной цене.'},
+  {tag:'Термин',term:'Dark kitchen',body:'Кухня без зала — работает только на доставку. Аренда в 3–5 раз дешевле обычного ресторана. Не требует кассиров и официантов.',fact:'CloudKitchens Трэвиса Каланика (основатель Uber) открыл тёмные кухни в 50+ городах мира. В России эту модель активно использует Яндекс Еда и ВкусВилл.'},
+  {tag:'Термин',term:'Импортозамещение',body:'Государственная политика замены иностранных товаров и услуг отечественными аналогами. Реализуется через реестры, квоты, субсидии и госзакупки.',fact:'Реестр отечественного ПО насчитывает 20 000+ продуктов. Астра Групп вышла на IPO с оценкой 150 млрд ₽ во многом благодаря госспросу на отечественные ОС.'},
+  {tag:'Факт',term:'Кто реально управляет Сбером?',body:'Герман Греф — CEO Сбера с 2007 года. За 17 лет превратил государственный банк в технологическую экосистему с выручкой 2+ трлн ₽.',fact:'В 2023 году Сбер заработал рекордную прибыль — 1,5 трлн ₽. Это больше, чем ВВП многих небольших государств.'},
+  {tag:'Факт',term:'Как Тиньков построил банк без офисов',body:'Олег Тиньков запустил кредитную карту по почте в 2006 году, когда все считали это безумием. Сейчас Т-Банк — 40+ млн клиентов.',fact:'Т-Банк тратит на привлечение клиента (CAC) в 7–10 раз меньше, чем традиционные банки с отделениями. Секрет — прямой маркетинг и data-driven подход.'},
+  {tag:'Факт',term:'Почему рубль падает — и что с этим делать',body:'Курс рубля зависит от цен на нефть, санкционного давления, торгового баланса и решений ЦБ. Бизнес защищается хеджированием, ценообразованием в рублях и локализацией цепочек.',fact:'В 2022 году рубль обвалился до 120 ₽/$ в марте, а потом укрепился до 55 ₽/$ к июню. Компании, захеджировавшие риски, избежали потерь.'},
+  {tag:'Факт',term:'Dodo Pizza: открытая бизнес-модель',body:'Фёдор Овчинников сделал Dodo полностью прозрачной компанией — публикует выручку, прибыль и стратегию. Это стало конкурентным преимуществом при привлечении партнёров.',fact:'Dodo IT-система обрабатывает 500 000+ заказов в сутки. Технология стала главным активом, а не рецепты пиццы.'}
+];
+
+// ============ CHART DATA ============
+
+function saveHistory(){
+  G_HISTORY.push({q:G.q,rev:G.m.rev,cos:G.m.cos,rep:G.m.rep,shr:G.m.shr,cash:G.m.cash,debt:G.m.debt});
+}
+
+// ============ MODAL FUNCTIONS ============
+function openModal(id){
+  if(id==='modalTerms') buildTermsModal();
+  if(id==='modalChart') buildCharts();
+  document.getElementById(id).classList.add('show');
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function closeTip(){document.getElementById('tipOverlay').classList.remove('show');}
+
+function showTip(term, body){
+  document.getElementById('tipTerm').textContent = term;
+  document.getElementById('tipBody').textContent = body;
+  document.getElementById('tipOverlay').classList.add('show');
+}
+
+function buildTermsModal(){
+  var h = '';
+  for(var i=0;i<TERMS_FACTS.length;i++){
+    var tf = TERMS_FACTS[i];
+    var tagColor = tf.tag === 'Факт' ? '#D4A017' : '#C8102E';
+    h += '<div class="fact-card">' +
+      '<div class="fact-tag" style="color:'+tagColor+'">'+tf.tag+'</div>' +
+      '<div style="font-family:Unbounded,sans-serif;font-size:12px;font-weight:700;color:#E8E4DC;margin-bottom:5px">'+tf.term+'</div>' +
+      '<div style="font-size:12px;color:#7A7A8C;line-height:1.6;margin-bottom:7px">'+tf.body+'</div>' +
+      '<div style="background:#1C1C22;border-radius:7px;padding:8px 11px;font-size:11px;color:#E8E4DC;line-height:1.5;border-left:3px solid '+tagColor+'">'+tf.fact+'</div>' +
+      '</div>';
+  }
+  document.getElementById('termsBody').innerHTML = h;
+}
+
+// ============ CHART.JS INTEGRATION ============
+var CHARTS = {};
+function buildCharts(){
+  if(typeof Chart === 'undefined') return;
+  var labels = [];
+  for(var i=0;i<G_HISTORY.length;i++) labels.push('Кв.'+G_HISTORY[i].q);
+  if(labels.length === 0) labels = ['Кв.1'];
+
+  var revData = G_HISTORY.map(function(h){return h.rev;});
+  var ebitData = G_HISTORY.map(function(h){return h.rev-h.cos;});
+  var repData = G_HISTORY.map(function(h){return h.rep;});
+  var shrData = G_HISTORY.map(function(h){return h.shr;});
+  var cashData = G_HISTORY.map(function(h){return h.cash;});
+  var debtData = G_HISTORY.map(function(h){return h.debt;});
+
+  var cfg = {responsive:true,plugins:{legend:{labels:{color:'#7A7A8C',font:{size:10}}}},scales:{x:{ticks:{color:'#7A7A8C',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#7A7A8C',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'}}}};
+
+  var revenueEl = document.getElementById('chartRevenue');
+  if(revenueEl){
+    if(CHARTS.revenue) CHARTS.revenue.destroy();
+    CHARTS.revenue = new Chart(revenueEl, {type:'line',data:{labels:labels,datasets:[{label:'Выручка',data:revData,borderColor:'#C8102E',backgroundColor:'rgba(200,16,46,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#C8102E'},{label:'EBITDA',data:ebitData,borderColor:'#2ECC71',backgroundColor:'rgba(46,204,113,0.08)',fill:true,tension:0.4,pointBackgroundColor:'#2ECC71'}]},options:cfg});
+  }
+  var repEl = document.getElementById('chartRep');
+  if(repEl){
+    if(CHARTS.rep) CHARTS.rep.destroy();
+    CHARTS.rep = new Chart(repEl, {type:'line',data:{labels:labels,datasets:[{label:'Репутация',data:repData,borderColor:'#D4A017',backgroundColor:'rgba(212,160,23,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#D4A017'},{label:'Доля рынка',data:shrData,borderColor:'#9B59B6',backgroundColor:'rgba(155,89,182,0.08)',fill:true,tension:0.4,pointBackgroundColor:'#9B59B6'}]},options:cfg});
+  }
+  var cashEl = document.getElementById('chartCash');
+  if(cashEl){
+    if(CHARTS.cash) CHARTS.cash.destroy();
+    CHARTS.cash = new Chart(cashEl, {type:'line',data:{labels:labels,datasets:[{label:'Кэш',data:cashData,borderColor:'#3498DB',backgroundColor:'rgba(52,152,219,0.1)',fill:true,tension:0.4,pointBackgroundColor:'#3498DB'},{label:'Долг',data:debtData,borderColor:'#E74C3C',backgroundColor:'rgba(231,76,60,0.08)',fill:true,tension:0.4,pointBackgroundColor:'#E74C3C'}]},options:cfg});
+  }
+}
+
+// ============ BENCHMARK DATA ============
+var BENCHMARKS = {
+  tech:   {rev:18, rep:72, shr:15, cash:25, ebitda:6, label:'Медиана IT-компаний реестра ПО'},
+  retail: {rev:28, rep:62, shr:12, cash:30, ebitda:4, label:'Медиана федерального ретейла'},
+  food:   {rev:20, rep:68, shr:8,  cash:18, ebitda:5, label:'Медиана сетевого общепита'},
+  mfg:    {rev:35, rep:58, shr:9,  cash:35, ebitda:5, label:'Медиана среднего производства'},
+  fin:    {rev:22, rep:65, shr:5,  cash:28, ebitda:7, label:'Медиана небольшого банка / fintech'}
+};
+
+function buildBenchmarkHtml(){
+  var m = G.m;
+  var profit = m.rev - m.cos;
+  var bm = BENCHMARKS[G.ind.id];
+  if(!bm) return '';
+
+  function bar(you, mkt, unit){
+    var maxV = Math.max(you, mkt, 1);
+    var yw = Math.round(you/maxV*100);
+    var mw = Math.round(mkt/maxV*100);
+    return '<div class="bench-row"><span class="bench-val you">'+you+' '+unit+'</span><span style="font-size:10px;color:#7A7A8C;margin:0 4px">vs</span><span class="bench-val mkt">'+mkt+' '+unit+'</span></div>' +
+      '<div class="bench-bar-wrap"><div class="bench-bar" style="width:'+yw+'%;background:#D4A017;height:4px;border-radius:2px;display:inline-block"></div></div>' +
+      '<div class="bench-bar-wrap" style="margin-top:2px"><div class="bench-bar" style="width:'+mw+'%;background:#3498DB;height:4px;border-radius:2px;display:inline-block"></div></div>';
+  }
+
+  return '<div style="margin-bottom:16px"><div style="font-family:Unbounded,sans-serif;font-size:11px;font-weight:700;color:#3498DB;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">📊 Бенчмарк: '+bm.label+'</div>' +
+    '<div style="font-size:11px;color:#7A7A8C;margin-bottom:10px"><span style="color:#D4A017;font-weight:700">■ Вы</span> &nbsp; <span style="color:#3498DB;font-weight:700">■ Рынок</span></div>' +
+    '<div class="bench-grid">' +
+    '<div class="bench-c"><div class="bench-lbl">Выручка</div>'+bar(m.rev,bm.rev,'млн ₽')+'</div>' +
+    '<div class="bench-c"><div class="bench-lbl">Репутация</div>'+bar(m.rep,bm.rep,'бал.')+'</div>' +
+    '<div class="bench-c"><div class="bench-lbl">Доля рынка</div>'+bar(m.shr,bm.shr,'%')+'</div>' +
+    '<div class="bench-c"><div class="bench-lbl">Кэш</div>'+bar(m.cash,bm.cash,'млн ₽')+'</div>' +
+    '</div></div>';
+}
+
+// ============ EXPORT JSON ============
+function exportJSON(){
+  var data = {
+    student: G.teacherMode ? {name:G.studentName,group:G.studentGroup} : null,
+    difficulty: G.diff,
+    industry: G.ind ? G.ind.name : '',
+    quarters: G.totalQ,
+    decisions: G.decs,
+    finalMetrics: G.m,
+    synergies: G.synUnlocked,
+    strategy: G.dilChosen,
+    score: G.score,
+    history: G_HISTORY
+  };
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'biznes-simulator-report.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📥 Отчёт скачан!');
+}
+
+// ============ EXPORT TEXT REPORT ============
+function exportText(){
+  var m = G.m, profit = m.rev - m.cos;
+  var ts = Math.max(0,Math.round(G.score+profit*2+m.rep/2+m.shr+m.cash/5));
+  var pct = Math.min(100,Math.round(ts/300*100));
+  var lines = [
+    '=== БИЗНЕС-СИМУЛЯТОР: ОТЧЁТ ===',
+    '',
+    G.teacherMode ? 'Студент: ' + G.studentName + ' | Группа: ' + G.studentGroup : '',
+    'Отрасль: ' + (G.ind ? G.ind.name : ''),
+    'Уровень: ' + DIFF[G.diff].lbl,
+    'Итоговый балл: ' + pct + '/100',
+    '',
+    '--- ФИНАНСОВЫЕ РЕЗУЛЬТАТЫ ---',
+    'Выручка: ' + m.rev + ' млн ₽',
+    'Прибыль: ' + profit + ' млн ₽',
+    'Кэш: ' + m.cash + ' млн ₽',
+    'Долг: ' + m.debt + ' млн ₽',
+    'Репутация: ' + m.rep + '/100',
+    'Доля рынка: ' + m.shr + '%',
+    '',
+    '--- РЕШЕНИЯ ПО КВАРТАЛАМ ---'
+  ];
+  for(var i=0;i<G.decs.length;i++){
+    var dc = G.decs[i];
+    var adv = ADVISORS[dc.who] || {role:''};
+    lines.push('Кв.' + dc.q + ' [' + adv.role + '] ' + dc.ev + ' → ' + dc.dec);
+  }
+  lines.push('');
+  lines.push('Синергий разблокировано: ' + G.synUnlocked.length);
+  lines.push('=================================');
+  var blob = new Blob([lines.filter(Boolean).join('\n')], {type:'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'biznes-simulator-report.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📄 Текстовый отчёт скачан!');
+}
+
+// ============ TOOLTIPS ON DECISIONS ============
+var DEC_TIPS = {
+  'Поднять зарплаты на 40%': {term:'Рынок труда и ФОТ',body:'При дефиците кадров компании вынуждены поднимать зарплаты — это называется wage spiral (зарплатная спираль). ФОТ (фонд оплаты труда) растёт, маржа падает. Альтернатива — автоматизация.'},
+  'Параллельный импорт через Казахстан': {term:'Параллельный импорт',body:'Ввоз товаров через третьи страны без согласия правообладателя. В России легализован с апреля 2022 г. Позволяет ввозить товары, но цена выше на 25–40% из-за логистики.'},
+  'Подписать СПИК': {term:'СПИК и господдержка',body:'Специнвестконтракт даёт льготы: нулевой налог на прибыль, субсидии, гарантированный госзаказ. Взамен — обязательства по локализации. Хорошо для стабильности, плохо для гибкости.'},
+  'Участвовать в пилоте первой волны': {term:'Цифровой рубль ЦБ',body:'ЦВЦБ (цифровая валюта центрального банка) — третья форма денег наряду с наличными и безналом. Хранится на платформе ЦБ, не в коммерческом банке. Первые участники получают инфраструктурные преимущества.'},
+  'Развивать собственный канал': {term:'Директ-продажи vs маркетплейс',body:'Продажи через маркетплейс быстрее, но комиссия 35–38% и нет данных о покупателях. Собственный канал: ниже охват, выше маржа (+15–20 п.п.) и полный контроль над данными.'},
+  'Хеджировать через банк': {term:'Валютное хеджирование',body:'Фиксация курса обмена на будущую дату через форвардный контракт или опцион. Стоит 1–2% от суммы, но защищает от резких движений курса рубля.'},
+  'Роботизация + программа переобучения': {term:'Автоматизация и рынок труда',body:'Роботизация снижает ФОТ, но создаёт социальное напряжение. Программы переобучения (reskilling) снижают сопротивление и улучшают репутацию работодателя — как это делает КАМАЗ.'}
+};
+
+function maybeShowTip(decTitle){
+  var tip = DEC_TIPS[decTitle];
+  if(tip) setTimeout(function(){ showTip(tip.term, tip.body); }, 800);
+}
+
+
+// ═══════════════════════════════════════════════
+// COMPETITOR SYSTEM
+// ═══════════════════════════════════════════════
+var COMP_NAMES = {
+  tech:   {name:'TechRus', ico:'🔷'},
+  retail: {name:'МегаТорг', ico:'🔶'},
+  food:   {name:'ВкусНет', ico:'🔴'},
+  mfg:    {name:'РосПром', ico:'⚙️'},
+  fin:    {name:'БанкЛайт', ico:'💜'}
+};
+var COMP_NEWS_POOL = {
+  tech:[
+    'получил контракт Минцифры на 180 млн ₽',
+    'открыл R&D-центр в Иннополисе',
+    'нанял 200 разработчиков после IPO',
+    'вошёл в реестр отечественного ПО',
+    'запустил интеграцию с 1С'
+  ],
+  retail:[
+    'открыл 12 магазинов в ЦФО',
+    'договорился с Wildberries об эксклюзиве',
+    'запустил собственную логистику',
+    'привлёк 500 млн ₽ от фонда',
+    'вышел в маркет Казани и Уфы'
+  ],
+  food:[
+    'открыл завод полуфабрикатов в Татарстане',
+    'подписал контракт с Яндекс Едой',
+    'запустил 5 dark kitchen в Москве',
+    'получил франшизных партнёров в 10 городах',
+    'выиграл тендер на питание в вузах'
+  ],
+  mfg:[
+    'открыл завод в ОЭЗ «Алабуга»',
+    'заключил СПИК на 800 млн ₽',
+    'закупил роботизированные линии KUKA',
+    'начал экспорт в Беларусь и Казахстан',
+    'получил субсидию ФРП на 120 млн ₽'
+  ],
+  fin:[
+    'получил банковскую лицензию ЦБ',
+    'привлёк 2 млн клиентов за квартал',
+    'запустил BNPL для малого бизнеса',
+    'интегрировался в систему цифрового рубля',
+    'открыл офисы в 15 городах'
+  ]
+};
+
+function initCompetitor(){
+  if(!G.ind) return;
+  var cn = COMP_NAMES[G.ind.id];
+  G.comp = {
+    name: cn.name,
+    ico: cn.ico,
+    rev: Math.round(G.m.rev * (0.8 + Math.random()*0.6)),
+    rep: Math.round(G.m.rep * (0.85 + Math.random()*0.3)),
+    shr: Math.round(G.m.shr * (0.9 + Math.random()*0.5)),
+    news: '',
+    threat: 'low'
+  };
+}
+
+function updateCompetitor(){
+  if(!G.comp) return;
+  var c = G.comp;
+  // competitor grows each quarter
+  var growthR = 0.05 + Math.random()*0.12;
+  var growthS = 0.03 + Math.random()*0.08;
+  c.rev = Math.round(c.rev * (1 + growthR));
+  c.shr = Math.min(60, Math.round(c.shr * (1 + growthS)));
+  c.rep = Math.min(100, c.rep + Math.round(Math.random()*4 - 1));
+  // pick news
+  var pool = COMP_NEWS_POOL[G.ind.id];
+  c.news = pool[G.q % pool.length];
+  // assess threat
+  if(c.shr > G.m.shr * 1.5) c.threat = 'high';
+  else if(c.shr > G.m.shr) c.threat = 'mid';
+  else c.threat = 'low';
+}
+
+function renderCompetitorBar(){
+  if(!G.comp) return '';
+  var c = G.comp;
+  var tLbl = c.threat==='high'?'Опасен':c.threat==='mid'?'Растёт':'Отстаёт';
+  return '<div class="comp-bar-wrap">' +
+    '<div class="comp-header"><div class="comp-name">'+c.ico+' '+c.name+' — конкурент</div><span class="comp-threat '+c.threat+'">'+tLbl+'</span></div>' +
+    '<div class="comp-metrics">' +
+    '<div class="cm-item"><div class="cm-val">'+c.rev+' млн</div><div class="cm-lbl">Выручка</div></div>' +
+    '<div class="cm-item"><div class="cm-val">'+c.shr+'%</div><div class="cm-lbl">Доля рынка</div></div>' +
+    '<div class="cm-item"><div class="cm-val">'+c.rep+'</div><div class="cm-lbl">Репутация</div></div>' +
+    '<div class="cm-item" style="background:rgba(200,16,46,0.08)"><div class="cm-val" style="color:#E8E4DC">'+G.m.shr+'%</div><div class="cm-lbl" style="color:#D4A017">Вы</div></div>' +
+    '</div>' +
+    (c.news ? '<div class="comp-news">📰 <strong>'+c.name+'</strong> '+c.news+'</div>' : '') +
+    '</div>';
+}
+
+// ═══════════════════════════════════════════════
+// REGION EFFECTS
+// ═══════════════════════════════════════════════
+var REGION_EFFECTS = {
+  'Москва':         {icon:'🏙️', effects:{rev:+3, cos:-2}, desc:'Высокий спрос, но дорогие зарплаты'},
+  'СПб':            {icon:'🌊', effects:{rep:+2, shr:+1}, desc:'Развитый рынок, культурный центр'},
+  'Казань':         {icon:'🏛️', effects:{cos:+2, rep:+1}, desc:'Господдержка Татарстана, ОЭЗ «Алабуга»'},
+  'Новосибирск':    {icon:'🔬', effects:{cos:-2, shr:+1}, desc:'Инженерная база, Академгородок'},
+  'Екатеринбург':   {icon:'⚙️', effects:{rev:+2, cos:-1}, desc:'Промышленный Урал, логистический хаб'},
+  'Краснодар':      {icon:'🌾', effects:{rev:+2, rep:+1}, desc:'Логистика продуктов, ЮФО'},
+  'Ростов':         {icon:'🚢', effects:{shr:+2, cos:-1}, desc:'Порт, экспортный узел'},
+  'Уфа':            {icon:'🛢️', effects:{cash:+2, rev:+1}, desc:'Нефтехимия, платёжеспособный регион'},
+  'Нижний Новгород':{icon:'🏭', effects:{cos:-2, rev:+1}, desc:'Промышленный кластер, ИТ-хаб'},
+  'Тольятти':       {icon:'🚗', effects:{cos:-3, shr:+1}, desc:'АвтоВАЗ, производственная экспертиза'},
+  'Челябинск':      {icon:'⛏️', effects:{cos:-2, rev:+1}, desc:'Металлургия, промышленная синергия'},
+  'Красноярск':     {icon:'🌲', effects:{cost:-1, shr:+2}, desc:'Ресурсный регион, СФО'},
+  'Воронеж':        {icon:'🌻', effects:{rev:+1, rep:+1}, desc:'Аграрный регион, ЦФО'},
+  'Иннополис':      {icon:'💻', effects:{cos:-3, rep:+2}, desc:'ОЭЗ для IT, налоговые льготы'},
+};
+
+function getRegionBonus(){
+  var totalRev=0, totalCos=0, totalRep=0, totalShr=0, totalCash=0;
+  for(var i=0;i<G.activeRegions.length;i++){
+    var r = G.activeRegions[i];
+    var ef = REGION_EFFECTS[r];
+    if(!ef) continue;
+    totalRev += ef.effects.rev||0;
+    totalCos += ef.effects.cos||0;
+    totalRep += ef.effects.rep||0;
+    totalShr += ef.effects.shr||0;
+    totalCash += ef.effects.cash||0;
+  }
+  return {rev:totalRev, cos:totalCos, rep:totalRep, shr:totalShr, cash:totalCash};
+}
+
+function applyRegionBonus(){
+  var b = getRegionBonus();
+  G.m.rev = Math.max(0, G.m.rev + b.rev);
+  G.m.cos = Math.max(0, G.m.cos + b.cos);
+  G.m.rep = Math.max(0, Math.min(100, G.m.rep + b.rep));
+  G.m.shr = Math.max(0, Math.min(100, G.m.shr + b.shr));
+  G.m.cash = Math.max(0, G.m.cash + b.cash);
+}
+
+function regionEffectHtml(){
+  var h = '<div style="margin-top:9px;font-size:9px;color:#7A7A8C;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Эффекты регионов</div>';
+  for(var i=0;i<G.activeRegions.length;i++){
+    var r = G.activeRegions[i];
+    var ef = REGION_EFFECTS[r];
+    if(!ef) continue;
+    var efStr = [];
+    if(ef.effects.rev) efStr.push((ef.effects.rev>0?'+':'')+ef.effects.rev+' выручка');
+    if(ef.effects.cos) efStr.push((ef.effects.cos>0?'+':'')+ef.effects.cos+' затраты');
+    if(ef.effects.rep) efStr.push((ef.effects.rep>0?'+':'')+ef.effects.rep+' репутация');
+    if(ef.effects.shr) efStr.push((ef.effects.shr>0?'+':'')+ef.effects.shr+' доля');
+    if(ef.effects.cash) efStr.push((ef.effects.cash>0?'+':'')+ef.effects.cash+' кэш');
+    h += '<div style="font-size:10px;color:#7A7A8C;padding:2px 0">'+ef.icon+' <span style="color:#E8E4DC">'+r+'</span>: '+efStr.join(', ')+'</div>';
+  }
+  return h;
+}
+
+// ═══════════════════════════════════════════════
+// NEWS BETWEEN QUARTERS
+// ═══════════════════════════════════════════════
+var NEWS_POOL = [
+  {src:'РБК',       text:'ЦБ сохранил ключевую ставку на уровне 21%',          impact:'neg', eff:{cos:1}},
+  {src:'Коммерсантъ',text:'Китайские поставщики снизили цены на 8% на фоне конкуренции',impact:'pos',eff:{cos:-2}},
+  {src:'Ведомости', text:'Рост рынка e-commerce составил 24% по итогам квартала',impact:'pos',eff:{rev:2}},
+  {src:'Forbes',    text:'Инфляция в России замедлилась до 7.8% годовых',       impact:'pos', eff:{rep:1}},
+  {src:'РБК',       text:'Минпромторг расширил перечень субсидируемых отраслей', impact:'pos',eff:{cash:3}},
+  {src:'Ведомости', text:'Дефицит IT-специалистов достиг 1 млн человек',        impact:'neg', eff:{cos:2}},
+  {src:'Коммерсантъ',text:'Wildberries поднял комиссии для продавцов до 40%',   impact:'neg', eff:{rev:-2}},
+  {src:'Forbes',    text:'Объём госзакупок отечественного ПО вырос на 35%',     impact:'pos', eff:{shr:1}},
+  {src:'РБК',       text:'Курс юаня к рублю стабилизировался на уровне 12 ₽',  impact:'neu', eff:{}},
+  {src:'Ведомости', text:'ФРП выдал рекордный объём льготных займов: 80 млрд ₽',impact:'pos',eff:{cash:2}},
+  {src:'Коммерсантъ',text:'Роскомнадзор ужесточил требования к хранению данных', impact:'neg',eff:{cos:1,rep:-1}},
+  {src:'Forbes',    text:'Продовольственная инфляция замедлилась: продукты подорожали лишь на 4%',impact:'pos',eff:{rep:1}},
+];
+
+
+function getNewsForQuarter(q){
+  // 3 news per quarter, no repeats
+  var pool = NEWS_POOL.slice();
+  var result = [];
+  for(var i=0;i<pool.length&&result.length<3;i++){
+    if(G_SHOWN_NEWS.indexOf(i) < 0){
+      result.push({idx:i, item:pool[i]});
+    }
+  }
+  if(result.length < 3){
+    G_SHOWN_NEWS = [];
+    for(var i=0;i<pool.length&&result.length<3;i++){
+      result.push({idx:i, item:pool[i]});
+    }
+  }
+  result.forEach(function(r){ G_SHOWN_NEWS.push(r.idx); });
+  return result.map(function(r){ return r.item; });
+}
+
+function showNewsScreen(q, onDone){
+  var news = getNewsForQuarter(q);
+  var compH = renderCompetitorBar();
+  var nh = '';
+  for(var i=0;i<news.length;i++){
+    var n = news[i];
+    nh += '<div class="news-item"><div class="news-source">'+n.src+'</div><div><div class="news-text">'+n.text+'</div><span class="ni-'+n.impact+'">'+(n.impact==='pos'?'▲ Позитивно для бизнеса':n.impact==='neg'?'▼ Негативно':'→ Нейтрально')+'</span></div></div>';
+    // apply effect
+    if(n.eff.rev) G.m.rev = Math.max(0, G.m.rev + (n.eff.rev||0));
+    if(n.eff.cos) G.m.cos = Math.max(0, G.m.cos + (n.eff.cos||0));
+    if(n.eff.rep) G.m.rep = Math.max(0, Math.min(100, G.m.rep + (n.eff.rep||0)));
+    if(n.eff.shr) G.m.shr = Math.max(0, Math.min(100, G.m.shr + (n.eff.shr||0)));
+    if(n.eff.cash) G.m.cash = Math.max(0, G.m.cash + (n.eff.cash||0));
+  }
+
+  G_NEWS_CALLBACK = onDone;
+  document.getElementById('gc').innerHTML =
+    '<div class="news-screen">' +
+    '<div style="font-family:Unbounded,sans-serif;font-size:10px;font-weight:700;color:#C8102E;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">📰 Новости рынка — Квартал '+q+'</div>' +
+    nh + '</div>' +
+    compH +
+    '<div class="brow"><button class="btn" onclick="G_NEWS_CALLBACK()">Начать квартал '+q+' →</button></div>';
+  updateHUD(); renderFin();
+}
+
+// ═══════════════════════════════════════════════
+// INVESTMENT PANEL (quarterly budget allocation)
+// ═══════════════════════════════════════════════
+var G_INVEST = {rd:20, mkt:20, hr:20, exp:20, auto:20};
+
+function renderInvestPanel(){
+  var budget = Math.max(5, Math.round(G.m.cash * 0.3));
+  var h = '<div class="invest-panel">' +
+    '<div class="invest-title">💰 Бюджет квартала: '+budget+' млн ₽ <span id="investLeft" style="color:#2ECC71">100%</span></div>' +
+    '<div>';
+  var cats = [
+    {key:'rd',  label:'R&D',         tip:'Новые продукты'},
+    {key:'mkt', label:'Маркетинг',   tip:'Привлечение клиентов'},
+    {key:'hr',  label:'Персонал',    tip:'Найм и удержание'},
+    {key:'exp', label:'Экспансия',   tip:'Новые регионы'},
+    {key:'auto',label:'Автоматизация',tip:'Снижение затрат'}
+  ];
+  for(var i=0;i<cats.length;i++){
+    var c = cats[i];
+    h += '<div class="invest-row">' +
+      '<div class="invest-label" title="'+c.tip+'">'+c.label+'</div>' +
+      '<input class="invest-slider" type="range" min="0" max="60" value="'+G_INVEST[c.key]+'" ' +
+        'oninput="updateInvest(\''+c.key+'\',this.value)" id="isl_'+c.key+'">' +
+      '<div class="invest-val" id="iv_'+c.key+'">'+G_INVEST[c.key]+'%</div>' +
+      '</div>';
+  }
+  h += '</div>' +
+    '<div style="height:5px;background:#242430;border-radius:3px;margin-top:9px;overflow:hidden">' +
+    '<div id="investFill" style="height:100%;border-radius:3px;background:#D4A017;width:100%;transition:width 0.3s"></div></div>' +
+    '<div style="font-size:10px;color:#7A7A8C;margin-top:5px">Сумма = 100%. Распределите приоритеты</div>' +
+    '</div>';
+  return h;
+}
+
+function updateInvest(key, val){
+  G_INVEST[key] = parseInt(val);
+  document.getElementById('iv_'+key).textContent = val+'%';
+  var total = 0;
+  var keys = ['rd','mkt','hr','exp','auto'];
+  for(var i=0;i<keys.length;i++) total += G_INVEST[keys[i]];
+  var leftEl = document.getElementById('investLeft');
+  var fillEl = document.getElementById('investFill');
+  if(leftEl) leftEl.textContent = total+'%';
+  var pct = Math.min(100, total);
+  if(fillEl){
+    fillEl.style.width = pct+'%';
+    fillEl.style.background = total > 100 ? '#E74C3C' : total === 100 ? '#2ECC71' : '#D4A017';
+  }
+}
+
+function applyInvestEffects(){
+  // Apply budget allocation effects
+  var rd = G_INVEST.rd, mkt = G_INVEST.mkt, hr = G_INVEST.hr, exp = G_INVEST.exp, auto = G_INVEST.auto;
+  G.m.rev  = Math.max(0, G.m.rev  + Math.round(mkt/20));
+  G.m.cos  = Math.max(0, G.m.cos  - Math.round(auto/25));
+  G.m.rep  = Math.min(100, G.m.rep + Math.round(hr/25));
+  G.m.shr  = Math.min(100, G.m.shr + Math.round((mkt+exp)/40));
+  G.m.cash = Math.max(0, G.m.cash - Math.round(G.m.cash * 0.1));
+  if(rd > 40) toast('💡 Высокие инвестиции в R&D ускорят рост!');
+  if(auto > 40) toast('⚙️ Автоматизация снижает затраты');
+}
+
+// ═══════════════════════════════════════════════
+// ACHIEVEMENTS
+// ═══════════════════════════════════════════════
+var ACHIEVEMENTS = [
+  {id:'unicorn',  icon:'🦄', name:'Российский единорог', desc:'Капитализация (кэш) > 100 млн ₽', check:function(){return G.m.cash>100;}},
+  {id:'monopoly', icon:'👑', name:'Второй Сбер',         desc:'Доля рынка > 30%',                 check:function(){return G.m.shr>30;}},
+  {id:'crisis',   icon:'🛡️', name:'Антикризисный менеджер',desc:'Пережить 3 макрокризиса без убытка',check:function(){return Object.keys(G.macroUsed).length>=3&&G.m.cash>0;}},
+  {id:'nodebt',   icon:'💎', name:'Без кредита',          desc:'Пройти игру с долгом 0',           check:function(){return G.m.debt===0;}},
+  {id:'repking',  icon:'⭐', name:'Репутационный король', desc:'Репутация > 90',                   check:function(){return G.m.rep>90;}},
+  {id:'regional', icon:'🗺️', name:'Федеральный охват',   desc:'Присутствие в 5+ регионах',        check:function(){return G.activeRegions.length>=5;}},
+  {id:'synergy3', icon:'⚡', name:'Синергист',            desc:'Разблокировать 3+ синергии',       check:function(){return G.synUnlocked.length>=3;}},
+  {id:'cashflow', icon:'💰', name:'Денежный поток',       desc:'Кэш > 50 млн ₽',                  check:function(){return G.m.cash>50;}}
+];
+var G_UNLOCKED_ACH = [];
+
+function checkAchievements(){
+  for(var i=0;i<ACHIEVEMENTS.length;i++){
+    var a = ACHIEVEMENTS[i];
+    if(G_UNLOCKED_ACH.indexOf(a.id)<0 && a.check()){
+      G_UNLOCKED_ACH.push(a.id);
+      showAchToast(a);
+    }
+  }
+}
+
+function showAchToast(a){
+  var el = document.createElement('div');
+  el.className = 'ach-toast';
+  el.innerHTML = '<span style="font-size:22px">'+a.icon+'</span><div><div style="font-family:Unbounded,sans-serif;font-size:10px;font-weight:700;color:#D4A017">🏆 Достижение разблокировано!</div><div style="font-size:12px;color:#E8E4DC;margin-top:2px">'+a.name+'</div></div>';
+  document.body.appendChild(el);
+  setTimeout(function(){ el.classList.add('show'); }, 100);
+  setTimeout(function(){ el.classList.remove('show'); setTimeout(function(){ el.remove(); }, 500); }, 3500);
+}
+
+function achievementsHtml(){
+  var h = '<div class="ach-grid">';
+  for(var i=0;i<ACHIEVEMENTS.length;i++){
+    var a = ACHIEVEMENTS[i];
+    var ul = G_UNLOCKED_ACH.indexOf(a.id) >= 0;
+    h += '<div class="ach-card'+(ul?' unlocked':'')+'"><div class="ach-icon">'+(ul?a.icon:'🔒')+'</div><div><div class="ach-name">'+a.name+'</div><div class="ach-desc">'+a.desc+'</div></div></div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+// ═══════════════════════════════════════════════
+// REPUTATION CRISES
+// ═══════════════════════════════════════════════
+var REP_CRISES = [
+  {ttl:'Забастовка сотрудников',  body:'Сотрудники требуют повышения зарплат на 25%. Без компромисса — остановка работы.',  icon:'✊', impact:{rep:-12, cos:-5}, decs:[
+    {id:'A',dt:'Принять требования',ds:'Дорого, но команда лояльна',d:{cos:-5,rep:+5,cash:-5}},
+    {id:'B',dt:'Частичное повышение + переговоры',ds:'Компромисс',d:{cos:-2,rep:-2,cash:-2}},
+    {id:'C',dt:'Отказать и уволить организаторов',ds:'Дёшево, репутационный удар',d:{cos:0,rep:-15,cash:0}}
+  ]},
+  {ttl:'Экологический скандал',   body:'СМИ опубликовали материал о нарушениях при утилизации отходов. Роспотребнадзор начал проверку.', icon:'☣️', impact:{rep:-10, cos:-3}, decs:[
+    {id:'A',dt:'Публичное признание + исправление',ds:'Прозрачность восстанавливает доверие',d:{cos:-4,rep:+3,cash:-4}},
+    {id:'B',dt:'Нанять PR и оспорить обвинения',ds:'Рискованно, но быстро',d:{cos:-3,rep:-5,cash:-3}},
+    {id:'C',dt:'Тихо исправить без огласки',ds:'Минимальные затраты',d:{cos:-2,rep:-8,cash:-2}}
+  ]},
+  {ttl:'Негатив в СМИ: расследование',body:'Журналисты-расследователи опубликовали материал о серых схемах ценообразования. 500 000 просмотров за сутки.', icon:'📰', impact:{rep:-8, shr:-2}, decs:[
+    {id:'A',dt:'Пресс-конференция CEO + открытость',ds:'Объяснить ценообразование публично',d:{rep:+4,shr:+1,cash:-2}},
+    {id:'B',dt:'Юридическое давление на СМИ',ds:'Иск об ущербе репутации',d:{rep:-5,shr:-1,cash:-3}},
+    {id:'C',dt:'Молчать и переждать',ds:'Скандал сам затихнет',d:{rep:-10,shr:-2,cash:0}}
+  ]},
+  {ttl:'Отзыв продукции', body:'Партия продукции оказалась бракованной. Роскачество требует отзыва. 3 000 единиц на складах.', icon:'⚠️', impact:{rev:-5, rep:-7}, decs:[
+    {id:'A',dt:'Добровольный отзыв + компенсация',ds:'Дорого, но правильно',d:{rev:-3,rep:+4,cash:-5}},
+    {id:'B',dt:'Тихий отзыв без огласки',ds:'Дешевле, риск утечки',d:{rev:-2,rep:-4,cash:-2}},
+    {id:'C',dt:'Оспорить претензии Роскачества',ds:'Суд, но можно выиграть',d:{rev:-5,rep:-8,cash:-2}}
+  ]}
+];
+
+var G_CRISIS_USED = [];
+
+function maybeShowRepCrisis(){
+  // 30% chance per quarter after q2
+  if(G.q < 3) return false;
+  if(Math.random() > 0.3) return false;
+  var avail = [];
+  for(var i=0;i<REP_CRISES.length;i++) if(G_CRISIS_USED.indexOf(i)<0) avail.push(i);
+  if(avail.length === 0) return false;
+  var idx = avail[Math.floor(Math.random()*avail.length)];
+  G_CRISIS_USED.push(idx);
+  renderRepCrisis(REP_CRISES[idx]);
+  return true;
+}
+
+function renderRepCrisis(cr){
+  G_CUR_REP_CRISIS = cr;
+  G.m.rep = Math.max(0, Math.min(100, G.m.rep + (cr.impact.rep||0)));
+  G.m.rev = Math.max(0, G.m.rev + (cr.impact.rev||0));
+  G.m.shr = Math.max(0, Math.min(100, G.m.shr + (cr.impact.shr||0)));
+
+  var dh = '';
+  for(var i=0;i<cr.decs.length;i++){
+    var dc = cr.decs[i];
+    dh += '<button class="db" data-dec="'+dc.id+'" onclick="crisisClick(this)"><span class="dl">'+dc.id+'</span><span><div class="dt">'+dc.dt+'</div><div class="ds">'+dc.ds+'</div></span></button>';
+  }
+  document.getElementById('gc').innerHTML =
+    '<div class="crisis-card">' +
+    '<div style="font-size:24px;margin-bottom:7px">'+cr.icon+'</div>' +
+    '<div class="crisis-title">Репутационный кризис: '+cr.ttl+'</div>' +
+    '<div style="font-size:13px;color:#E8E4DC;line-height:1.7;margin-bottom:10px">'+cr.body+'</div>' +
+    '</div>' +
+    '<div class="dec-ttl">Ваша реакция</div>' +
+    '<div class="dec-list">'+dh+'</div>';
+}
+
+
+function crisisClick(btn){
+  G_CUR_REP_CRISIS_DEC = btn.getAttribute('data-dec');
+  chooseRepCrisis();
+}
+function humanClick(btn){
+  G_CUR_HUMAN_DEC = btn.getAttribute('data-dec');
+  chooseHuman();
+}
+function chooseRepCrisis(){
+  var decId = G_CUR_REP_CRISIS_DEC;
+  var decs = G_CUR_REP_CRISIS ? G_CUR_REP_CRISIS.decs : [];
+  var dec = null;
+  for(var i=0;i<decs.length;i++) if(decs[i].id===decId){dec=decs[i];break;}
+  if(!dec) return;
+  var d = dec.d;
+  G.m.rev  = Math.max(0, G.m.rev  + (d.rev||0));
+  G.m.cos  = Math.max(0, G.m.cos  + (d.cos||0));
+  G.m.rep  = Math.max(0, Math.min(100, G.m.rep + (d.rep||0)));
+  G.m.shr  = Math.max(0, Math.min(100, G.m.shr + (d.shr||0)));
+  G.m.cash = Math.max(0, G.m.cash + (d.cash||0));
+  G.decs.push({q:G.q, ev:'Репутационный кризис', dec:dec.dt, d:{rev:d.rev||0,cos:d.cos||0,rep:d.rep||0,shr:d.shr||0,cash:d.cash||0}, who:'ceo'});
+  checkAchievements();
+  saveHistory();
+  var nl = G.q>=G.totalQ ? 'Завершить игру →' : 'Квартал '+(G.q+1)+' →';
+  document.getElementById('gc').innerHTML = '<div class="res-box"><div style="font-family:Unbounded,sans-serif;font-size:10px;color:#D4A017;margin-bottom:5px">✓ КРИЗИС ОТРАБОТАН</div><div style="font-size:13px;font-weight:600;color:#E8E4DC;margin-bottom:3px">'+dec.dt+'</div><div style="font-size:11px;color:#7A7A8C">'+dec.ds+'</div></div><div class="brow"><button class="btn" onclick="nextQ()">'+nl+'</button></div>';
+  updateHUD(); renderFin();
+}
+
+// ═══════════════════════════════════════════════
+// HUMAN FACTOR EVENTS
+// ═══════════════════════════════════════════════
+var HUMAN_EVENTS = [
+  {ttl:'CTO получил оффер от Яндекса',person:{ico:'💻',role:'CTO',name:'Дмитрий В.',quote:'«Яндекс предлагает мне x2 к зарплате и интересные задачи...»'},
+   body:'Ваш ключевой технический директор рассматривает предложение Яндекса. Его уход означает потерю 40% IT-экспертизы.',
+   decs:[{id:'A',dt:'Контроффер: x1.5 и опционы',ds:'Дорого, но он остаётся',d:{cos:-4,rep:+3,cash:-4}},{id:'B',dt:'Отпустить и найти замену',ds:'3 месяца поиска, риски',d:{rep:-5,cos:-2,shr:-2,cash:-2}},{id:'C',dt:'Стать его ментором + проект-мечта',ds:'Нематериальная мотивация',d:{rep:+5,cos:-1,cash:-1}}]},
+  {ttl:'Команда требует удалённую работу',person:{ico:'👥',role:'Коллектив',name:'Вся команда',quote:'«Мы хотим гибридный формат — 3 дня из дома»'},
+   body:'После пандемии сотрудники привыкли к удалёнке. Отказ ведёт к росту текучки. Согласие — к сложностям координации.',
+   decs:[{id:'A',dt:'Гибридный формат 2+3',ds:'Компромисс, доволен большинство',d:{rep:+6,cos:-1,cash:-1}},{id:'B',dt:'Полная удалёнка',ds:'Экономия на офисе, риски коммуникации',d:{rep:+4,cos:2,cash:2}},{id:'C',dt:'Обязательный офис 5 дней',ds:'Контроль, но текучка растёт',d:{rep:-8,cos:0,cash:0}}]},
+  {ttl:'Ключевой менеджер по продажам уходит к конкуренту',person:{ico:'📣',role:'VP Sales',name:'Иван П.',quote:'«Они предложили долю в бизнесе...»'},
+   body:'Менеджер ведёт 60% крупных клиентов. Его уход создаёт риск потери 30% выручки в следующем квартале.',
+   decs:[{id:'A',dt:'Предложить долю в компании',ds:'Партнёрство удерживает',d:{rep:+4,rev:+2,cash:-3}},{id:'B',dt:'Срочно ввести второго менеджера',ds:'Параллельное ведение клиентов',d:{cos:-3,rep:-2,cash:-3}},{id:'C',dt:'Отпустить и перераспределить портфель',ds:'Команда берёт на себя',d:{rep:-6,rev:-4,cos:-1,cash:0}}]}
+];
+var G_HUMAN_USED = [];
+
+function maybeShowHumanEvent(){
+  if(G.q < 2) return false;
+  if(Math.random() > 0.35) return false;
+  var avail = [];
+  for(var i=0;i<HUMAN_EVENTS.length;i++) if(G_HUMAN_USED.indexOf(i)<0) avail.push(i);
+  if(avail.length === 0) return false;
+  var idx = avail[Math.floor(Math.random()*avail.length)];
+  G_HUMAN_USED.push(idx);
+  renderHumanEvent(HUMAN_EVENTS[idx]);
+  return true;
+}
+
+function renderHumanEvent(ev){
+  G_CUR_HUMAN_EVENT = ev;
+  var p = ev.person;
+  var dh = '';
+  for(var i=0;i<ev.decs.length;i++){
+    var dc = ev.decs[i];
+    dh += '<button class="db" data-dec="'+dc.id+'" onclick="humanClick(this)"><span class="dl">'+dc.id+'</span><span><div class="dt">'+dc.dt+'</div><div class="ds">'+dc.ds+'</div></span></button>';
+  }
+  document.getElementById('gc').innerHTML =
+    '<div class="human-card">' +
+    '<div class="human-title">👤 Человеческий фактор: '+ev.ttl+'</div>' +
+    '<div class="human-person"><div class="hp-avatar">'+p.ico+'</div><div><div class="hp-role">'+p.role+'</div><div class="hp-name">'+p.name+'</div><div class="hp-quote">'+p.quote+'</div></div></div>' +
+    '<div style="font-size:13px;color:#7A7A8C;line-height:1.7">'+ev.body+'</div>' +
+    '</div>' +
+    '<div class="dec-ttl">Ваше решение</div>' +
+    '<div class="dec-list">'+dh+'</div>';
+}
+
+function chooseHuman(){
+  var decId = G_CUR_HUMAN_DEC;
+  var decs = G_CUR_HUMAN_EVENT ? G_CUR_HUMAN_EVENT.decs : [];
+  var curEv = G_CUR_HUMAN_EVENT;
+  var dec = null;
+  for(var i=0;i<decs.length;i++) if(decs[i].id===decId){dec=decs[i];break;}
+  if(!dec) return;
+  var d = dec.d;
+  G.m.rev  = Math.max(0, G.m.rev  + (d.rev||0));
+  G.m.cos  = Math.max(0, G.m.cos  + (d.cos||0));
+  G.m.rep  = Math.max(0, Math.min(100, G.m.rep + (d.rep||0)));
+  G.m.shr  = Math.max(0, Math.min(100, G.m.shr + (d.shr||0)));
+  G.m.cash = Math.max(0, G.m.cash + (d.cash||0));
+  G.decs.push({q:G.q, ev:curEv ? curEv.ttl : 'Человеческий фактор', dec:dec.dt, d:{rev:d.rev||0,cos:d.cos||0,rep:d.rep||0,shr:d.shr||0,cash:d.cash||0}, who:'ceo'});
+  checkAchievements();
+  saveHistory();
+  var nl = G.q>=G.totalQ ? 'Завершить игру →' : 'Квартал '+(G.q+1)+' →';
+  document.getElementById('gc').innerHTML = '<div class="res-box"><div style="font-family:Unbounded,sans-serif;font-size:10px;color:#D4A017;margin-bottom:5px">✓ РЕШЕНИЕ ПРИНЯТО</div><div style="font-size:13px;font-weight:600;color:#E8E4DC;margin-bottom:3px">'+dec.dt+'</div><div style="font-size:11px;color:#7A7A8C">'+dec.ds+'</div></div><div class="brow"><button class="btn" onclick="nextQ()">'+nl+'</button></div>';
+  updateHUD(); renderFin();
+}
+
+buildInds();
+</script>
+</body>
+</html>
